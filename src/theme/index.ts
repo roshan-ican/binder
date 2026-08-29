@@ -9,4 +9,6 @@ export const motion = {
   tap: 120,
   small: 200,
   sheet: 260,
+  trace: 2100,
+  water: 4200,
 } as const;

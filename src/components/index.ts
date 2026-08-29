@@ -1,5 +1,9 @@
 export { Text, type TextProps } from './Text';
+export { ChromeSurface } from './ChromeSurface';
+export { ChromeTraceBorder } from './ChromeTraceBorder';
+export { AnimatedPressable } from './AnimatedPressable';
 export { Button, TextButton, IconButton, type ButtonProps } from './Button';
+export { BrowseSlider, type BrowseSliderItem } from './BrowseSlider';
 export { Input, type InputProps } from './Input';
 export { Chip, type ChipProps } from './Chip';
 export { Card } from './Card';

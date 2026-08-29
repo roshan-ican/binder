@@ -1,15 +1,24 @@
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, TextInput, View } from 'react-native';
 import { BackHeader, Divider, Icon, IconButton, Screen, Text, TrustBadge } from '../components';
-import { conversations } from '../data/mock';
+import { conversations, jobSeekerConversations, type UserRole } from '../data/mock';
 import { colors, radius, size, spacing, typography } from '../theme';
 
 /**
  * Simple charcoal bubbles, no gradients. The context strip keeps the deal in
  * view so neither side has to ask "which enquiry is this?".
  */
-export function ConversationScreen({ conversationId, onBack }: { conversationId: string; onBack: () => void }) {
-  const conversation = conversations.find((item) => item.id === conversationId) ?? conversations[0];
+export function ConversationScreen({
+  role,
+  conversationId,
+  onBack,
+}: {
+  role: UserRole;
+  conversationId: string;
+  onBack: () => void;
+}) {
+  const inbox = role === 'job-seeker' ? jobSeekerConversations : conversations;
+  const conversation = inbox.find((item) => item.id === conversationId) ?? inbox[0];
   const [draft, setDraft] = useState('');
   const [messages, setMessages] = useState(conversation.messages);
 

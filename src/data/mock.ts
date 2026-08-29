@@ -4,6 +4,7 @@ import type { TrustSignal } from '../components/TrustBadge';
 export type Business = {
   id: string;
   name: string;
+  category: BusinessCategory;
   role: string;
   city: string;
   region: string;
@@ -18,6 +19,8 @@ export type Business = {
   serves: string[];
   whyItMatches: string[];
 };
+
+export type BusinessCategory = 'manufacturer' | 'shopkeeper' | 'supplier' | 'service';
 
 export type Enquiry = {
   id: string;
@@ -38,6 +41,26 @@ export type Enquiry = {
   expiresIn: string;
 };
 
+export type UserRole = 'business' | 'job-seeker';
+
+export type JobOpportunity = {
+  id: string;
+  jobType: JobType;
+  title: string;
+  company: string;
+  city: string;
+  region: string;
+  salary: string;
+  workType: string;
+  fitNote: string;
+  activity: string;
+  trust: TrustSignal;
+  match?: MatchQuality;
+  whyItFits: string[];
+};
+
+export type JobType = 'full-time' | 'part-time' | 'contract' | 'internship';
+
 export const me = {
   business: 'Roshan Clothing',
   person: 'Roshan',
@@ -49,10 +72,21 @@ export const me = {
   completeness: 72,
 };
 
+export const candidate = {
+  person: 'Roshan',
+  headline: 'Production and sourcing candidate',
+  city: 'Kanpur',
+  region: 'Uttar Pradesh, India',
+  skills: ['Manufacturing', 'Sourcing', 'Quality control'],
+  seeking: ['Production roles', 'Buyer coordination'],
+  completeness: 64,
+};
+
 export const businesses: Business[] = [
   {
     id: 'abc-leather',
     name: 'ABC Leather Works',
+    category: 'manufacturer',
     role: 'Manufacturer',
     city: 'Kanpur',
     region: 'Uttar Pradesh',
@@ -77,6 +111,7 @@ export const businesses: Business[] = [
   {
     id: 'northline-tanners',
     name: 'Northline Tanners',
+    category: 'supplier',
     role: 'Supplier',
     city: 'Kanpur',
     region: 'Uttar Pradesh',
@@ -94,6 +129,7 @@ export const businesses: Business[] = [
   {
     id: 'meridian-pack',
     name: 'Meridian Packaging',
+    category: 'supplier',
     role: 'Packaging',
     city: 'Kanpur',
     region: 'Uttar Pradesh',
@@ -111,6 +147,7 @@ export const businesses: Business[] = [
   {
     id: 'shakti-logistics',
     name: 'Shakti Logistics',
+    category: 'service',
     role: 'Logistics',
     city: 'Lucknow',
     region: 'Uttar Pradesh',
@@ -124,6 +161,24 @@ export const businesses: Business[] = [
     capacity: '120 vehicles',
     serves: ['North India'],
     whyItMatches: ['Serves your route', 'Registration verified'],
+  },
+  {
+    id: 'city-fabric-house',
+    name: 'City Fabric House',
+    category: 'shopkeeper',
+    role: 'Shopkeeper',
+    city: 'Kanpur',
+    region: 'Uttar Pradesh',
+    capability: 'Retail fabrics · daily stock',
+    activity: 'Open today',
+    trust: 'documents',
+    match: 'good',
+    about: 'Neighbourhood fabric shop with cotton, denim, lining and seasonal garment material.',
+    offers: ['Retail supply', 'Shopkeeper'],
+    moq: 'No minimum',
+    capacity: 'Daily retail stock',
+    serves: ['Kanpur'],
+    whyItMatches: ['Same city', 'Low quantity purchases', 'Documents provided'],
   },
 ];
 
@@ -221,6 +276,84 @@ export const myEnquiries: Enquiry[] = [
   },
 ];
 
+export const jobOpportunities: JobOpportunity[] = [
+  {
+    id: 'production-supervisor',
+    jobType: 'full-time',
+    title: 'Production Supervisor',
+    company: 'ABC Leather Works',
+    city: 'Kanpur',
+    region: 'Uttar Pradesh',
+    salary: '₹38,000–₹52,000 / month',
+    workType: 'Full-time',
+    fitNote: 'Strong skill match',
+    activity: 'Posted today',
+    trust: 'verified',
+    match: 'strong',
+    whyItFits: ['Leather manufacturing experience', 'Same city', 'Quality control background'],
+  },
+  {
+    id: 'buyer-coordinator',
+    jobType: 'full-time',
+    title: 'Buyer Coordinator',
+    company: 'Meridian Packaging',
+    city: 'Kanpur',
+    region: 'Uttar Pradesh',
+    salary: '₹30,000–₹44,000 / month',
+    workType: 'Full-time',
+    fitNote: 'Relevant operations role',
+    activity: 'Active today',
+    trust: 'proven',
+    match: 'good',
+    whyItFits: ['Buyer follow-up', 'Vendor coordination', 'Local commute'],
+  },
+  {
+    id: 'sourcing-associate',
+    jobType: 'contract',
+    title: 'Sourcing Associate',
+    company: 'Northline Tanners',
+    city: 'Lucknow',
+    region: 'Uttar Pradesh',
+    salary: '₹28,000–₹36,000 / month',
+    workType: 'Hybrid',
+    fitNote: 'Potential match',
+    activity: 'Posted 2 days ago',
+    trust: 'documents',
+    match: 'potential',
+    whyItFits: ['Supplier sourcing', 'North India network', 'Documents provided'],
+  },
+  {
+    id: 'quality-check-intern',
+    jobType: 'internship',
+    title: 'Quality Check Intern',
+    company: 'City Fabric House',
+    city: 'Kanpur',
+    region: 'Uttar Pradesh',
+    salary: '₹8,000–₹12,000 / month',
+    workType: 'Internship',
+    fitNote: 'Good entry point',
+    activity: 'Posted today',
+    trust: 'documents',
+    match: 'good',
+    whyItFits: ['Quality control interest', 'Same city', 'Retail fabric exposure'],
+  },
+  {
+    id: 'inventory-assistant',
+    jobType: 'part-time',
+    title: 'Inventory Assistant',
+    company: 'Meridian Packaging',
+    city: 'Kanpur',
+    region: 'Uttar Pradesh',
+    salary: '₹12,000–₹18,000 / month',
+    workType: 'Part-time',
+    fitNote: 'Nearby operations role',
+    activity: 'Active today',
+    trust: 'proven',
+    match: 'potential',
+    whyItFits: ['Inventory work', 'Local commute', 'Flexible hours'],
+  },
+];
+
 export type Conversation = {
   id: string;
   business: string;
@@ -255,6 +388,59 @@ export const conversations: Conversation[] = [
     messages: [
       { id: '1', from: 'them', body: 'Sharing the box spec sheet.', time: 'Yesterday' },
       { id: '2', from: 'me', body: 'Received. We need a 4-colour print on the lid.', time: 'Yesterday' },
+    ],
+  },
+];
+
+export const jobSeekerConversations: Conversation[] = [
+  {
+    id: 'job-abc-leather',
+    business: 'ABC Leather Works',
+    preview: 'Can you come in for a production supervisor interview tomorrow?',
+    time: '8m',
+    unread: true,
+    context: 'Production Supervisor application',
+    messages: [
+      {
+        id: '1',
+        from: 'them',
+        body: 'We reviewed your profile for the Production Supervisor role.',
+        time: '10:04',
+      },
+      {
+        id: '2',
+        from: 'them',
+        body: 'Can you come in for an interview tomorrow afternoon?',
+        time: '10:06',
+      },
+      {
+        id: '3',
+        from: 'me',
+        body: 'Yes. Please share the location and time.',
+        time: '10:11',
+      },
+    ],
+  },
+  {
+    id: 'job-meridian-pack',
+    business: 'Meridian Packaging',
+    preview: 'Your buyer coordination experience looks relevant.',
+    time: '2h',
+    unread: false,
+    context: 'Buyer Coordinator application',
+    messages: [
+      {
+        id: '1',
+        from: 'them',
+        body: 'Your buyer coordination experience looks relevant for this opening.',
+        time: 'Yesterday',
+      },
+      {
+        id: '2',
+        from: 'me',
+        body: 'I can share references from my last production role.',
+        time: 'Yesterday',
+      },
     ],
   },
 ];

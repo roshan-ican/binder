@@ -23,31 +23,31 @@ const scale = {
     fontFamily: fontFamily.medium,
     fontSize: 40,
     lineHeight: 44,
-    letterSpacing: -1,
+    letterSpacing: 0,
   },
   displayMedium: {
     fontFamily: fontFamily.medium,
     fontSize: 32,
     lineHeight: 36,
-    letterSpacing: -0.8,
+    letterSpacing: 0,
   },
   heading1: {
     fontFamily: fontFamily.semibold,
     fontSize: 28,
     lineHeight: 34,
-    letterSpacing: -0.5,
+    letterSpacing: 0,
   },
   heading2: {
     fontFamily: fontFamily.semibold,
     fontSize: 24,
     lineHeight: 30,
-    letterSpacing: -0.4,
+    letterSpacing: 0,
   },
   heading3: {
     fontFamily: fontFamily.semibold,
     fontSize: 20,
     lineHeight: 26,
-    letterSpacing: -0.3,
+    letterSpacing: 0,
   },
   bodyLarge: {
     fontFamily: fontFamily.regular,
@@ -68,20 +68,20 @@ const scale = {
     fontFamily: fontFamily.semibold,
     fontSize: 14,
     lineHeight: 18,
-    letterSpacing: 0.2,
+    letterSpacing: 0,
   },
   label: {
     fontFamily: fontFamily.semibold,
     fontSize: 12,
     lineHeight: 16,
-    letterSpacing: 0.2,
+    letterSpacing: 0,
   },
   /** Uppercase micro label — match quality, section openers, trust marks. */
   micro: {
     fontFamily: fontFamily.semibold,
     fontSize: 10,
     lineHeight: 14,
-    letterSpacing: 0.8,
+    letterSpacing: 0,
     textTransform: 'uppercase',
   },
   /** Business quantities. Tabular figures so numbers stay scannable. */
@@ -89,7 +89,7 @@ const scale = {
     fontFamily: fontFamily.medium,
     fontSize: 36,
     lineHeight: 40,
-    letterSpacing: -0.5,
+    letterSpacing: 0,
     ...Platform.select({
       ios: { fontVariant: ['tabular-nums'] as TextStyle['fontVariant'] },
       default: {},
@@ -100,7 +100,7 @@ const scale = {
     fontFamily: fontFamily.serif,
     fontSize: 32,
     lineHeight: 38,
-    letterSpacing: -0.4,
+    letterSpacing: 0,
   },
 } satisfies Scale;
 

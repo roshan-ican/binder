@@ -1,5 +1,6 @@
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import { colors, radius, size, spacing } from '../theme';
+import { AnimatedPressable } from './AnimatedPressable';
 import { Text } from './Text';
 import { Icon, type IconName } from './Icon';
 
@@ -43,14 +44,15 @@ export function Chip({ label, selected = false, onPress, icon, onRemove }: ChipP
   if (!onPress && !onRemove) return content;
 
   return (
-    <Pressable
+    <AnimatedPressable
       accessibilityRole="button"
       accessibilityState={{ selected }}
       accessibilityLabel={label}
       onPress={onRemove ?? onPress}
       hitSlop={spacing[1]}
+      pressedScale={0.96}
     >
       {content}
-    </Pressable>
+    </AnimatedPressable>
   );
 }

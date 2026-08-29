@@ -49,6 +49,36 @@ const primitives = {
 } as const;
 
 export const colors = {
+  /** Core dark premium palette from the brief. */
+  background: '#080808',
+  surface: {
+    base: '#111111',
+    raised: '#1B1B1B',
+    soft: '#0E0E0E',
+    hover: '#242424',
+    selected: '#2A2A2A',
+    field: '#101010',
+    inverse: '#E7E2DD',
+  },
+  surfaceRaised: '#1B1B1B',
+  surfaceSoft: '#111111',
+  border: {
+    subtle: '#2A2A2A',
+    default: '#393939',
+    strong: '#595A59',
+    field: '#2D2D2D',
+    focus: '#C4C0BF',
+  },
+  borderStrong: '#595A59',
+  textPrimary: '#F2F2F2',
+  textSecondary: '#A9A6A4',
+  textMuted: '#787676',
+  chromeLight: '#E4E0DD',
+  chromeMid: '#C4C0BF',
+  chromeDark: '#8B8986',
+  success: '#6B8C72',
+  successDark: '#374839',
+
   /** Page and container backgrounds. */
   bg: {
     primary: primitives.ink['000'],
@@ -57,7 +87,7 @@ export const colors = {
     elevated: primitives.ink[150],
   },
   /** Surfaces that sit on a background. */
-  surface: {
+  surfaceLegacy: {
     soft: primitives.ink[200],
     hover: primitives.ink[250],
     selected: primitives.ink[300],
@@ -70,13 +100,6 @@ export const colors = {
     tertiary: primitives.paper[400],
     disabled: primitives.paper[600],
     inverse: primitives.obsidian,
-  },
-  border: {
-    subtle: primitives.line[100],
-    default: primitives.line[200],
-    strong: primitives.line[300],
-    field: primitives.line[150],
-    focus: primitives.chrome[300],
   },
   /**
    * Chrome is a material accent, not a theme. Allowed on: the wordmark, the
@@ -92,11 +115,12 @@ export const colors = {
 export const chromeGradient = {
   angle: 120,
   stops: [
-    { color: '#767676', position: 0 },
-    { color: '#E6E6E1', position: 0.32 },
-    { color: '#858580', position: 0.52 },
-    { color: '#D3D3CF', position: 0.72 },
-    { color: '#656561', position: 1 },
+    { color: '#7B7A78', position: 0 },
+    { color: '#E9E5E1', position: 0.2 },
+    { color: '#C5C1BE', position: 0.42 },
+    { color: '#8F8C89', position: 0.62 },
+    { color: '#DAD5D1', position: 0.8 },
+    { color: '#686765', position: 1 },
   ],
 } as const;
 

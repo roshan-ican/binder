@@ -1,8 +1,9 @@
-import { useState } from 'react';
-import { View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Animated, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomTabs, type TabKey } from '../components';
-import { colors } from '../theme';
+import type { UserRole } from '../data/mock';
+import { colors, motion } from '../theme';
 import { BusinessProfileScreen } from '../screens/BusinessProfileScreen';
 import { ConversationScreen } from '../screens/ConversationScreen';
 import { DiscoverScreen } from '../screens/DiscoverScreen';
@@ -35,6 +36,7 @@ export function AppNavigator() {
   const [stack, setStack] = useState<Route[]>([{ name: 'welcome' }]);
   const [tab, setTab] = useState<TabKey>('discover');
   const [query, setQuery] = useState('');
+  const [role, setRole] = useState<UserRole>('business');
 
   const route = stack[stack.length - 1];
   const push = (next: Route) => setStack((current) => [...current, next]);
@@ -42,7 +44,15 @@ export function AppNavigator() {
   const reset = (next: Route) => setStack([next]);
 
   if (route.name === 'welcome') {
-    return <WelcomeScreen onContinue={() => reset({ name: 'tabs' })} onExplore={() => push({ name: 'foundations' })} />;
+    return (
+      <WelcomeScreen
+        onSelectRole={(nextRole) => {
+          setRole(nextRole);
+          reset({ name: 'tabs' });
+        }}
+        onExplore={() => push({ name: 'foundations' })}
+      />
+    );
   }
 
   const screen = (() => {
@@ -51,6 +61,7 @@ export function AppNavigator() {
         return (
           <SearchResultsScreen
             query={query}
+            role={role}
             onQueryChange={setQuery}
             onBack={pop}
             onOpenBusiness={(id) => push({ name: 'business', id })}
@@ -73,9 +84,9 @@ export function AppNavigator() {
           />
         );
       case 'opportunities':
-        return <OpportunitiesScreen onBack={pop} />;
+        return <OpportunitiesScreen role={role} onBack={pop} />;
       case 'conversation':
-        return <ConversationScreen conversationId={route.id} onBack={pop} />;
+        return <ConversationScreen role={role} conversationId={route.id} onBack={pop} />;
       case 'foundations':
         return <FoundationsScreen onBack={pop} />;
       case 'tabs':
@@ -83,6 +94,7 @@ export function AppNavigator() {
         return (
           <TabScreen
             tab={tab}
+            role={role}
             query={query}
             onQueryChange={setQuery}
             onSearch={() => push({ name: 'search' })}
@@ -98,16 +110,55 @@ export function AppNavigator() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg.primary }}>
-      <View style={{ flex: 1 }}>{screen}</View>
+      <RouteFrame routeKey={routeKey(route, tab)}>{screen}</RouteFrame>
       {route.name === 'tabs' ? (
-        <BottomTabs active={tab} onChange={setTab} bottomInset={insets.bottom} />
+        <BottomTabs role={role} active={tab} onChange={setTab} bottomInset={insets.bottom} />
       ) : null}
     </View>
   );
 }
 
+function routeKey(route: Route, tab: TabKey) {
+  if (route.name === 'tabs') return `tabs:${tab}`;
+  if ('id' in route) return `${route.name}:${route.id}`;
+  return route.name;
+}
+
+function RouteFrame({ routeKey, children }: { routeKey: string; children: React.ReactNode }) {
+  const entry = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    entry.setValue(0);
+    Animated.timing(entry, {
+      toValue: 1,
+      duration: motion.small,
+      useNativeDriver: true,
+    }).start();
+  }, [entry, routeKey]);
+
+  return (
+    <Animated.View
+      style={{
+        flex: 1,
+        opacity: entry,
+        transform: [
+          {
+            translateY: entry.interpolate({
+              inputRange: [0, 1],
+              outputRange: [8, 0],
+            }),
+          },
+        ],
+      }}
+    >
+      {children}
+    </Animated.View>
+  );
+}
+
 function TabScreen({
   tab,
+  role,
   query,
   onQueryChange,
   onSearch,
@@ -118,6 +169,7 @@ function TabScreen({
   onOpenFoundations,
 }: {
   tab: TabKey;
+  role: UserRole;
   query: string;
   onQueryChange: (value: string) => void;
   onSearch: () => void;
@@ -129,16 +181,17 @@ function TabScreen({
 }) {
   switch (tab) {
     case 'enquiries':
-      return <EnquiriesScreen onOpenEnquiry={onOpenEnquiry} />;
+      return <EnquiriesScreen role={role} onOpenEnquiry={onOpenEnquiry} />;
     case 'inbox':
-      return <InboxScreen onOpenConversation={onOpenConversation} />;
+      return <InboxScreen role={role} onOpenConversation={onOpenConversation} />;
     case 'profile':
-      return <ProfileScreen onOpenFoundations={onOpenFoundations} />;
+      return <ProfileScreen role={role} onOpenFoundations={onOpenFoundations} />;
     case 'discover':
     default:
       return (
         <DiscoverScreen
           query={query}
+          role={role}
           onQueryChange={onQueryChange}
           onSearch={onSearch}
           onOpenBusiness={onOpenBusiness}
