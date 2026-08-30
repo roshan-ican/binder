@@ -9,7 +9,6 @@ import { ConversationScreen } from '../screens/ConversationScreen';
 import { DiscoverScreen } from '../screens/DiscoverScreen';
 import { EnquiriesScreen } from '../screens/EnquiriesScreen';
 import { EnquiryDetailScreen } from '../screens/EnquiryDetailScreen';
-import { FoundationsScreen } from '../screens/FoundationsScreen';
 import { InboxScreen } from '../screens/InboxScreen';
 import { OpportunitiesScreen } from '../screens/OpportunitiesScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
@@ -28,8 +27,7 @@ type Route =
   | { name: 'business'; id: string }
   | { name: 'enquiry'; id: string }
   | { name: 'opportunities' }
-  | { name: 'conversation'; id: string }
-  | { name: 'foundations' };
+  | { name: 'conversation'; id: string };
 
 export function AppNavigator() {
   const insets = useSafeAreaInsets();
@@ -50,7 +48,7 @@ export function AppNavigator() {
           setRole(nextRole);
           reset({ name: 'tabs' });
         }}
-        onExplore={() => push({ name: 'foundations' })}
+        onExplore={() => reset({ name: 'tabs' })}
       />
     );
   }
@@ -87,8 +85,6 @@ export function AppNavigator() {
         return <OpportunitiesScreen role={role} onBack={pop} />;
       case 'conversation':
         return <ConversationScreen role={role} conversationId={route.id} onBack={pop} />;
-      case 'foundations':
-        return <FoundationsScreen onBack={pop} />;
       case 'tabs':
       default:
         return (
@@ -102,7 +98,6 @@ export function AppNavigator() {
             onOpenEnquiry={(id) => push({ name: 'enquiry', id })}
             onOpenOpportunities={() => push({ name: 'opportunities' })}
             onOpenConversation={(id) => push({ name: 'conversation', id })}
-            onOpenFoundations={() => push({ name: 'foundations' })}
           />
         );
     }
@@ -166,7 +161,6 @@ function TabScreen({
   onOpenEnquiry,
   onOpenOpportunities,
   onOpenConversation,
-  onOpenFoundations,
 }: {
   tab: TabKey;
   role: UserRole;
@@ -177,7 +171,6 @@ function TabScreen({
   onOpenEnquiry: (id: string) => void;
   onOpenOpportunities: () => void;
   onOpenConversation: (id: string) => void;
-  onOpenFoundations: () => void;
 }) {
   switch (tab) {
     case 'enquiries':
@@ -185,7 +178,7 @@ function TabScreen({
     case 'inbox':
       return <InboxScreen role={role} onOpenConversation={onOpenConversation} />;
     case 'profile':
-      return <ProfileScreen role={role} onOpenFoundations={onOpenFoundations} />;
+      return <ProfileScreen role={role} />;
     case 'discover':
     default:
       return (

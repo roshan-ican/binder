@@ -15,7 +15,7 @@ import {
 import { candidate, me, type UserRole } from '../data/mock';
 import { colors, rhythm, size, spacing } from '../theme';
 
-export function ProfileScreen({ role, onOpenFoundations }: { role: UserRole; onOpenFoundations: () => void }) {
+export function ProfileScreen({ role }: { role: UserRole }) {
   const isJobSeeker = role === 'job-seeker';
   const profileName = isJobSeeker ? candidate.person : me.business;
   const profileMeta = isJobSeeker ? `${candidate.headline} · ${candidate.city}` : `${me.industry} · ${me.city}`;
@@ -88,7 +88,6 @@ export function ProfileScreen({ role, onOpenFoundations }: { role: UserRole; onO
           { label: 'Saved searches', onPress: undefined },
           { label: 'Team', onPress: undefined },
           { label: 'Notification preferences', onPress: undefined },
-          { label: 'Design system', onPress: onOpenFoundations },
           { label: 'Account', onPress: undefined },
         ].map((row) => (
           <View key={row.label}>
