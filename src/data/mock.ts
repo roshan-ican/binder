@@ -44,14 +44,14 @@ export type Enquiry = {
 export type UserRole = 'business' | 'job-seeker';
 
 export type BusinessProfileData = {
-  gstin: string;
+  gstin?: string;
   businessName: string;
   contactName: string;
   industry: string;
   city: string;
   offers: string[];
   needs: string[];
-  verified: boolean;
+  verificationStatus: 'unverified' | 'verified';
 };
 
 export type JobSeekerProfileData = {

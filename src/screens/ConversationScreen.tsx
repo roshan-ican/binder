@@ -12,17 +12,19 @@ export function ConversationScreen({
   role,
   conversationId,
   onBack,
+  onTrustAction,
 }: {
   role: UserRole;
   conversationId: string;
   onBack: () => void;
+  onTrustAction?: (action: () => void) => void;
 }) {
   const inbox = role === 'job-seeker' ? jobSeekerConversations : conversations;
   const conversation = inbox.find((item) => item.id === conversationId) ?? inbox[0];
   const [draft, setDraft] = useState('');
   const [messages, setMessages] = useState(conversation.messages);
 
-  const send = () => {
+  const commitSend = () => {
     if (!draft.trim()) return;
     setMessages((current) => [
       ...current,
@@ -30,6 +32,7 @@ export function ConversationScreen({
     ]);
     setDraft('');
   };
+  const send = () => onTrustAction ? onTrustAction(commitSend) : commitSend();
 
   return (
     <Screen scroll={false} density="dense">

@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BottomTabs, type TabKey } from '../components';
+import { BottomTabs, BusinessTrustGate, type TabKey } from '../components';
 import type { BusinessProfileData, JobSeekerProfileData, UserRole } from '../data/mock';
 import { colors, motion } from '../theme';
 import { BusinessProfileScreen } from '../screens/BusinessProfileScreen';
 import { BusinessVerificationScreen } from '../screens/BusinessVerificationScreen';
+import { BusinessOnboardingScreen } from '../screens/BusinessOnboardingScreen';
 import { ConversationScreen } from '../screens/ConversationScreen';
 import { DiscoverScreen } from '../screens/DiscoverScreen';
 import { EnquiriesScreen } from '../screens/EnquiriesScreen';
@@ -24,7 +25,8 @@ import { WelcomeScreen } from '../screens/WelcomeScreen';
  */
 type Route =
   | { name: 'welcome' }
-  | { name: 'business-verification' }
+  | { name: 'business-onboarding' }
+  | { name: 'business-verification'; source: 'onboarding' | 'gate' | 'profile' }
   | { name: 'job-seeker-onboarding' }
   | { name: 'tabs' }
   | { name: 'search' }
@@ -42,34 +44,52 @@ export function AppNavigator() {
   const [businessProfile, setBusinessProfile] = useState<BusinessProfileData | null>(null);
   const [jobSeekerProfile, setJobSeekerProfile] = useState<JobSeekerProfileData | null>(null);
   const [jobSwipeCreditsUsed, setJobSwipeCreditsUsed] = useState(0);
+  const [trustGateOpen, setTrustGateOpen] = useState(false);
+  const pendingTrustAction = useRef<null | (() => void)>(null);
 
   const route = stack[stack.length - 1];
   const push = (next: Route) => setStack((current) => [...current, next]);
   const pop = () => setStack((current) => (current.length > 1 ? current.slice(0, -1) : current));
   const reset = (next: Route) => setStack([next]);
+  const runTrustAction = (action: () => void) => {
+    if (role !== 'business' || businessProfile?.verificationStatus === 'verified') return action();
+    pendingTrustAction.current = action;
+    setTrustGateOpen(true);
+  };
 
   if (route.name === 'welcome') {
     return (
       <WelcomeScreen
         onSelectRole={(nextRole) => {
           setRole(nextRole);
-          reset({ name: nextRole === 'business' ? 'business-verification' : 'job-seeker-onboarding' });
+          reset({ name: nextRole === 'business' ? 'business-onboarding' : 'job-seeker-onboarding' });
         }}
         onExplore={() => reset({ name: 'tabs' })}
       />
     );
   }
 
-  if (route.name === 'business-verification') {
+  if (route.name === 'business-onboarding') {
+    return <BusinessOnboardingScreen onComplete={(profile) => { setBusinessProfile(profile); reset({ name: 'business-verification', source: 'onboarding' }); }} />;
+  }
+
+  if (route.name === 'business-verification' && businessProfile) {
+    const finish = () => {
+      if (route.source === 'onboarding') { setTab('discover'); reset({ name: 'tabs' }); return; }
+      pop();
+      const action = pendingTrustAction.current;
+      pendingTrustAction.current = null;
+      action?.();
+    };
     return (
       <BusinessVerificationScreen
+        profile={businessProfile}
+        allowSkip={route.source === 'onboarding'}
+        onBack={route.source === 'onboarding' ? undefined : () => { pendingTrustAction.current = null; pop(); }}
         onVerified={(profile) => {
           setBusinessProfile(profile);
         }}
-        onExplore={() => {
-          setTab('discover');
-          reset({ name: 'tabs' });
-        }}
+        onSkip={finish}
       />
     );
   }
@@ -103,7 +123,7 @@ export function AppNavigator() {
           <BusinessProfileScreen
             businessId={route.id}
             onBack={pop}
-            onConnect={() => push({ name: 'conversation', id: 'abc-leather' })}
+            onConnect={() => runTrustAction(() => push({ name: 'conversation', id: 'abc-leather' }))}
           />
         );
       case 'enquiry':
@@ -117,7 +137,7 @@ export function AppNavigator() {
       case 'opportunities':
         return <OpportunitiesScreen role={role} onBack={pop} />;
       case 'conversation':
-        return <ConversationScreen role={role} conversationId={route.id} onBack={pop} />;
+          return <ConversationScreen role={role} conversationId={route.id} onBack={pop} onTrustAction={runTrustAction} />;
       case 'tabs':
       default:
         return (
@@ -135,6 +155,8 @@ export function AppNavigator() {
             jobSeekerProfile={jobSeekerProfile}
             jobSwipeCreditsUsed={jobSwipeCreditsUsed}
             onJobSwipe={() => setJobSwipeCreditsUsed((count) => Math.min(count + 1, 10))}
+            onTrustAction={runTrustAction}
+            onVerifyBusiness={() => push({ name: 'business-verification', source: 'profile' })}
           />
         );
     }
@@ -146,6 +168,7 @@ export function AppNavigator() {
       {route.name === 'tabs' ? (
         <BottomTabs role={role} active={tab} onChange={setTab} bottomInset={insets.bottom} />
       ) : null}
+      <BusinessTrustGate visible={trustGateOpen} onClose={() => { setTrustGateOpen(false); pendingTrustAction.current = null; }} onVerify={() => { setTrustGateOpen(false); businessProfile ? push({ name: 'business-verification', source: 'gate' }) : reset({ name: 'business-onboarding' }); }} />
     </View>
   );
 }
@@ -202,6 +225,8 @@ function TabScreen({
   jobSeekerProfile,
   jobSwipeCreditsUsed,
   onJobSwipe,
+  onTrustAction,
+  onVerifyBusiness,
 }: {
   tab: TabKey;
   role: UserRole;
@@ -216,14 +241,16 @@ function TabScreen({
   jobSeekerProfile: JobSeekerProfileData | null;
   jobSwipeCreditsUsed: number;
   onJobSwipe: () => void;
+  onTrustAction: (action: () => void) => void;
+  onVerifyBusiness: () => void;
 }) {
   switch (tab) {
     case 'enquiries':
-      return <EnquiriesScreen role={role} onOpenEnquiry={onOpenEnquiry} />;
+      return <EnquiriesScreen role={role} onOpenEnquiry={onOpenEnquiry} onCreateEnquiry={() => onTrustAction(() => undefined)} />;
     case 'inbox':
       return <InboxScreen role={role} onOpenConversation={onOpenConversation} />;
     case 'profile':
-      return <ProfileScreen role={role} businessProfile={businessProfile} jobSeekerProfile={jobSeekerProfile} />;
+      return <ProfileScreen role={role} businessProfile={businessProfile} jobSeekerProfile={jobSeekerProfile} onVerifyBusiness={onVerifyBusiness} />;
     case 'discover':
     default:
       return (

@@ -23,9 +23,11 @@ type StatusTab = 'active' | 'draft' | 'closed' | 'expired';
 export function EnquiriesScreen({
   role,
   onOpenEnquiry,
+  onCreateEnquiry,
 }: {
   role: UserRole;
   onOpenEnquiry: (id: string) => void;
+  onCreateEnquiry?: () => void;
 }) {
   const [tab, setTab] = useState<StatusTab>('active');
   const list = myEnquiries.filter((enquiry) => enquiry.status === tab);
@@ -126,11 +128,12 @@ export function EnquiriesScreen({
             title="No enquiries yet."
             body="Publish what your business needs and Binder will find relevant suppliers."
             actionLabel="Create enquiry"
+            onAction={onCreateEnquiry}
           />
         ) : null}
       </View>
 
-      <Button label="New enquiry" style={{ marginTop: rhythm.sectionToSection }} />
+      <Button label="New enquiry" onPress={onCreateEnquiry} style={{ marginTop: rhythm.sectionToSection }} />
     </Screen>
   );
 }
