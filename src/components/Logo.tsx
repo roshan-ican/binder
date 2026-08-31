@@ -1,5 +1,6 @@
 import { View } from 'react-native';
 import { colors, radius, size } from '../theme';
+import { ChromeSurface } from './ChromeSurface';
 import { Text } from './Text';
 
 type LogoSize = 'sm' | 'md' | 'lg' | 'xl';
@@ -37,14 +38,16 @@ export function Logo({ name, size: logoSize = 'md' }: { name: string; size?: Log
         width: dimension,
         height: dimension,
         borderRadius: radius.sm,
-        backgroundColor: colors.surface.soft,
+        backgroundColor: '#D8D2CC',
         borderWidth: 1,
-        borderColor: colors.border.subtle,
+        borderColor: '#EFEAE5',
         alignItems: 'center',
         justifyContent: 'center',
+        overflow: 'hidden',
       }}
     >
-      <Text variant={variant} tone="secondary">
+      <ChromeSurface borderRadius={radius.sm} intensity="soft" />
+      <Text variant={variant} tone="inverse">
         {initials(name)}
       </Text>
     </View>

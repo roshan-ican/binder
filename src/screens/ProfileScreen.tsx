@@ -12,64 +12,73 @@ import {
   TextButton,
   TrustBadge,
 } from '../components';
-import { me } from '../data/mock';
+import { candidate, me, type UserRole } from '../data/mock';
 import { colors, rhythm, size, spacing } from '../theme';
 
-export function ProfileScreen({ onOpenFoundations }: { onOpenFoundations: () => void }) {
+export function ProfileScreen({ role }: { role: UserRole }) {
+  const isJobSeeker = role === 'job-seeker';
+  const profileName = isJobSeeker ? candidate.person : me.business;
+  const profileMeta = isJobSeeker ? `${candidate.headline} · ${candidate.city}` : `${me.industry} · ${me.city}`;
+  const completeness = isJobSeeker ? candidate.completeness : me.completeness;
+  const offerTitle = isJobSeeker ? 'Your skills' : 'What you offer';
+  const needTitle = isJobSeeker ? 'Roles you want' : 'What you need';
+  const offers = isJobSeeker ? candidate.skills : me.offers;
+  const needs = isJobSeeker ? candidate.seeking : me.needs;
+
   return (
     <Screen>
       <ScreenHeading title="Profile" />
 
       <View style={{ flexDirection: 'row', gap: spacing[4], alignItems: 'center', marginTop: rhythm.titleToContent }}>
-        <Logo name={me.business} size="lg" />
+        <Logo name={profileName} size="lg" />
         <View style={{ flex: 1, gap: spacing[1] }}>
-          <Text variant="heading3">{me.business}</Text>
+          <Text variant="heading3">{profileName}</Text>
           <Text variant="bodySmall" tone="secondary">
-            {me.industry} · {me.city}
+            {profileMeta}
           </Text>
-          <TextButton label="View public profile" />
+          <TextButton label={isJobSeeker ? 'View candidate profile' : 'View public profile'} />
         </View>
       </View>
 
       {/* Completeness is stated plainly. No progress arcade. */}
       <Card style={{ marginTop: spacing[6], gap: spacing[3] }}>
-        <Text variant="body">Your profile is {me.completeness}% complete.</Text>
+        <Text variant="body">Your profile is {completeness}% complete.</Text>
         <Text variant="bodySmall" tone="secondary">
-          Add two details to improve matching.
+          {isJobSeeker ? 'Add two details to improve job matching.' : 'Add two details to improve matching.'}
         </Text>
         <View style={{ gap: spacing[2], marginTop: spacing[1] }}>
           <Text variant="bodySmall" tone="tertiary">
-            + Monthly capacity
+            {isJobSeeker ? '+ Resume or work history' : '+ Monthly capacity'}
           </Text>
           <Text variant="bodySmall" tone="tertiary">
-            + Registration document
+            {isJobSeeker ? '+ Expected salary' : '+ Registration document'}
           </Text>
         </View>
       </Card>
 
       <View style={{ marginTop: rhythm.sectionToSection, gap: spacing[3] }}>
-        <SectionHeader title="What you offer" action="Edit" />
+        <SectionHeader title={offerTitle} action="Edit" />
         <View style={{ flexDirection: 'row', gap: spacing[2], flexWrap: 'wrap' }}>
-          {me.offers.map((offer) => (
+          {offers.map((offer) => (
             <Chip key={offer} label={offer} />
           ))}
         </View>
       </View>
 
       <View style={{ marginTop: rhythm.sectionToSection, gap: spacing[3] }}>
-        <SectionHeader title="What you need" action="Edit" />
+        <SectionHeader title={needTitle} action="Edit" />
         <View style={{ flexDirection: 'row', gap: spacing[2], flexWrap: 'wrap' }}>
-          {me.needs.map((need) => (
+          {needs.map((need) => (
             <Chip key={need} label={need} />
           ))}
         </View>
       </View>
 
       <View style={{ marginTop: rhythm.sectionToSection, gap: spacing[3] }}>
-        <SectionHeader title="Documents & verification" />
-        <TrustBadge signal="verified" detail="GST · verified 12 Aug 2026" />
-        <TrustBadge signal="pending" detail="Company registration" />
-        <TrustBadge signal="documents" detail="Catalogue · not verified" />
+        <SectionHeader title={isJobSeeker ? 'Resume & verification' : 'Documents & verification'} />
+        <TrustBadge signal="verified" detail={isJobSeeker ? 'Phone · verified 12 Aug 2026' : 'GST · verified 12 Aug 2026'} />
+        <TrustBadge signal="pending" detail={isJobSeeker ? 'Work history' : 'Company registration'} />
+        <TrustBadge signal="documents" detail={isJobSeeker ? 'Resume · not verified' : 'Catalogue · not verified'} />
       </View>
 
       <Divider style={{ marginTop: rhythm.sectionToSection }} />
@@ -79,7 +88,6 @@ export function ProfileScreen({ onOpenFoundations }: { onOpenFoundations: () => 
           { label: 'Saved searches', onPress: undefined },
           { label: 'Team', onPress: undefined },
           { label: 'Notification preferences', onPress: undefined },
-          { label: 'Design system', onPress: onOpenFoundations },
           { label: 'Account', onPress: undefined },
         ].map((row) => (
           <View key={row.label}>

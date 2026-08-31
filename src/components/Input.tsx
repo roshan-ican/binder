@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { TextInput, View, type KeyboardTypeOptions } from 'react-native';
-import { colors, radius, size, spacing, typography } from '../theme';
-import { Text } from './Text';
+import { useState } from "react";
+import { TextInput, View, type KeyboardTypeOptions } from "react-native";
+import { colors, radius, size, spacing, typography } from "../theme";
+import { Text } from "./Text";
 
 export type InputProps = {
   /** Labels sit above the field. Placeholder text is never the only label. */
@@ -41,7 +41,13 @@ export function Input({
 
   return (
     <View style={{ gap: spacing[2] }}>
-      <View style={{ flexDirection: 'row', gap: spacing[2], alignItems: 'baseline' }}>
+      <View
+        style={{
+          flexDirection: "row",
+          gap: spacing[2],
+          alignItems: "baseline",
+        }}
+      >
         <Text variant="label" tone="secondary">
           {label}
         </Text>
@@ -60,9 +66,13 @@ export function Input({
           borderWidth: size.hairline,
           borderColor,
           paddingHorizontal: spacing[4],
-          flexDirection: 'row',
-          alignItems: multiline ? 'flex-start' : 'center',
+          flexDirection: "row",
+          alignItems: multiline ? "flex-start" : "center",
           gap: spacing[2],
+          shadowColor: "#000000",
+          shadowOpacity: 0.16,
+          shadowRadius: 6,
+          shadowOffset: { width: 0, height: 1 },
         }}
       >
         {prefix ? (
@@ -87,7 +97,7 @@ export function Input({
               flex: 1,
               color: colors.text.primary,
               paddingVertical: multiline ? spacing[3] : 0,
-              textAlignVertical: multiline ? 'top' : 'center',
+              textAlignVertical: multiline ? "top" : "center",
             },
           ]}
         />

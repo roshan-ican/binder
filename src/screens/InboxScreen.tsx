@@ -10,15 +10,26 @@ import {
   Text,
   TopTabs,
 } from '../components';
-import { conversations } from '../data/mock';
+import { conversations, jobSeekerConversations, type UserRole } from '../data/mock';
 import { colors, radius, spacing } from '../theme';
 
-export function InboxScreen({ onOpenConversation }: { onOpenConversation: (id: string) => void }) {
+export function InboxScreen({
+  role,
+  onOpenConversation,
+}: {
+  role: UserRole;
+  onOpenConversation: (id: string) => void;
+}) {
   const [tab, setTab] = useState<'messages' | 'requests'>('messages');
+  const isJobSeeker = role === 'job-seeker';
+  const inbox = isJobSeeker ? jobSeekerConversations : conversations;
 
   return (
     <Screen>
-      <ScreenHeading title="Inbox" />
+      <ScreenHeading
+        title="Inbox"
+        supporting={isJobSeeker ? 'Messages from hiring teams and application updates.' : undefined}
+      />
 
       <View style={{ marginTop: spacing[4] }}>
         <TopTabs
@@ -33,7 +44,7 @@ export function InboxScreen({ onOpenConversation }: { onOpenConversation: (id: s
 
       {tab === 'messages' ? (
         <View style={{ marginTop: spacing[3] }}>
-          {conversations.map((conversation, index) => (
+          {inbox.map((conversation, index) => (
             <View key={conversation.id}>
               <Card
                 onPress={() => onOpenConversation(conversation.id)}
@@ -68,14 +79,18 @@ export function InboxScreen({ onOpenConversation }: { onOpenConversation: (id: s
                   </View>
                 </View>
               </Card>
-              {index < conversations.length - 1 ? <Divider /> : null}
+              {index < inbox.length - 1 ? <Divider /> : null}
             </View>
           ))}
         </View>
       ) : (
         <EmptyState
-          title="No connection requests."
-          body="When a business asks to discuss one of your enquiries, it will wait here with the context attached."
+          title={isJobSeeker ? 'No interview requests.' : 'No connection requests.'}
+          body={
+            isJobSeeker
+              ? 'When an employer invites you to interview, it will wait here with the role attached.'
+              : 'When a business asks to discuss one of your enquiries, it will wait here with the context attached.'
+          }
         />
       )}
     </Screen>

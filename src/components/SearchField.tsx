@@ -1,12 +1,13 @@
-import { TextInput, View } from 'react-native';
-import { colors, radius, size, spacing, typography } from '../theme';
-import { Icon } from './Icon';
+import { TextInput, View } from "react-native";
+import { colors, radius, size, spacing, typography } from "../theme";
+import { ChromeSurface } from "./ChromeSurface";
+import { Icon } from "./Icon";
 
 /** Search must feel immediate — the query stays visible after submitting. */
 export function SearchField({
   value,
   onChangeText,
-  placeholder = 'Search products, suppliers, services...',
+  placeholder = "Search products, suppliers, services...",
   onSubmit,
   autoFocus,
 }: {
@@ -21,26 +22,32 @@ export function SearchField({
       style={{
         height: size.control,
         borderRadius: radius.input,
-        backgroundColor: colors.surface.field,
+        backgroundColor: "#E2DDD7",
         borderWidth: size.hairline,
-        borderColor: colors.border.field,
+        borderColor: "#AAA39D",
         paddingHorizontal: spacing[4],
-        flexDirection: 'row',
-        alignItems: 'center',
+        flexDirection: "row",
+        alignItems: "center",
         gap: spacing[3],
+        shadowColor: "#000000",
+        shadowOpacity: 0.2,
+        shadowRadius: 6,
+        shadowOffset: { width: 0, height: 1 },
+        overflow: "hidden",
       }}
     >
-      <Icon name="search" size={size.iconSm} color={colors.text.tertiary} />
+      <ChromeSurface borderRadius={radius.input} intensity="soft" />
+      <Icon name="search" size={size.iconSm} color={colors.text.inverse} />
       <TextInput
         accessibilityLabel="Search Binder"
         value={value}
         onChangeText={onChangeText}
         onSubmitEditing={onSubmit}
         placeholder={placeholder}
-        placeholderTextColor={colors.text.tertiary}
+        placeholderTextColor="#55524F"
         returnKeyType="search"
         autoFocus={autoFocus}
-        style={[typography.body, { flex: 1, color: colors.text.primary }]}
+        style={[typography.body, { flex: 1, color: colors.text.inverse }]}
       />
     </View>
   );

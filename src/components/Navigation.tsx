@@ -1,59 +1,85 @@
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
+import type { UserRole } from '../data/mock';
 import { colors, radius, size, spacing } from '../theme';
+import { AnimatedPressable } from './AnimatedPressable';
+import { ChromeSurface } from './ChromeSurface';
 import { Icon, type IconName } from './Icon';
 import { Text } from './Text';
 
 export type TabKey = 'discover' | 'enquiries' | 'inbox' | 'profile';
 
-const tabs: { key: TabKey; label: string; icon: IconName }[] = [
+const businessTabs: { key: TabKey; label: string; icon: IconName }[] = [
   { key: 'discover', label: 'Discover', icon: 'search' },
   { key: 'enquiries', label: 'Enquiries', icon: 'document' },
   { key: 'inbox', label: 'Inbox', icon: 'message' },
   { key: 'profile', label: 'Profile', icon: 'building' },
 ];
 
+const jobSeekerTabs: { key: TabKey; label: string; icon: IconName }[] = [
+  { key: 'discover', label: 'Jobs', icon: 'search' },
+  { key: 'enquiries', label: 'Applied', icon: 'document' },
+  { key: 'inbox', label: 'Inbox', icon: 'message' },
+  { key: 'profile', label: 'Profile', icon: 'users' },
+];
+
 /** Four tabs in V1. No floating centre button. */
 export function BottomTabs({
+  role = 'business',
   active,
   onChange,
   bottomInset = 0,
 }: {
+  role?: UserRole;
   active: TabKey;
   onChange: (key: TabKey) => void;
   bottomInset?: number;
 }) {
+  const tabs = role === 'job-seeker' ? jobSeekerTabs : businessTabs;
+
   return (
     <View
       accessibilityRole="tablist"
       style={{
         flexDirection: 'row',
         borderTopWidth: size.hairline,
-        borderTopColor: colors.border.subtle,
-        backgroundColor: colors.bg.primary,
+        borderTopColor: '#DED9D3',
+        backgroundColor: '#D6D1CB',
         paddingTop: spacing[2],
         paddingBottom: spacing[2] + bottomInset,
+        overflow: 'hidden',
       }}
     >
+      <ChromeSurface borderRadius={0} intensity="soft" />
       {tabs.map((tab) => {
         const isActive = tab.key === active;
         return (
-          <Pressable
+          <AnimatedPressable
             key={tab.key}
             accessibilityRole="tab"
             accessibilityState={{ selected: isActive }}
             accessibilityLabel={tab.label}
             onPress={() => onChange(tab.key)}
-            style={{ flex: 1, alignItems: 'center', gap: spacing[1], minHeight: size.tap, justifyContent: 'center' }}
+            pressedScale={0.94}
+            wrapperStyle={{ flex: 1 }}
+            style={{
+              flex: 1,
+              alignItems: 'center',
+              gap: spacing[1],
+              minHeight: size.tap,
+              justifyContent: 'center',
+              overflow: 'hidden',
+              position: 'relative',
+            }}
           >
             <Icon
               name={tab.icon}
               size={size.iconNav}
-              color={isActive ? colors.text.primary : colors.text.tertiary}
+              color={isActive ? colors.text.inverse : '#4F4D4A'}
             />
-            <Text variant="micro" tone={isActive ? 'primary' : 'tertiary'}>
+            <Text variant="micro" tone="inverse" style={{ opacity: isActive ? 1 : 0.7 }}>
               {tab.label}
             </Text>
-          </Pressable>
+          </AnimatedPressable>
         );
       })}
     </View>
@@ -71,28 +97,45 @@ export function TopTabs<T extends string>({
   onChange: (key: T) => void;
 }) {
   return (
-    <View accessibilityRole="tablist" style={{ flexDirection: 'row', gap: spacing[6] }}>
+    <View
+      accessibilityRole="tablist"
+      style={{
+        flexDirection: 'row',
+        borderRadius: radius.full,
+        borderWidth: size.hairline,
+        borderColor: '#BDB7B1',
+        backgroundColor: '#D6D1CB',
+        overflow: 'hidden',
+        alignSelf: 'flex-start',
+      }}
+    >
+      <ChromeSurface borderRadius={radius.full} intensity="soft" />
       {items.map((item) => {
         const isActive = item.key === active;
         return (
-          <Pressable
+          <AnimatedPressable
             key={item.key}
             accessibilityRole="tab"
             accessibilityState={{ selected: isActive }}
             onPress={() => onChange(item.key)}
-            style={{ paddingVertical: spacing[3], gap: spacing[2] }}
+            pressedScale={0.97}
+            style={{
+              minHeight: size.controlSm,
+              minWidth: 92,
+              paddingHorizontal: spacing[4],
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: isActive ? 'rgba(255,255,255,0.62)' : 'transparent',
+              borderRightWidth: item === items[items.length - 1] ? 0 : size.hairline,
+              borderRightColor: 'rgba(35,33,31,0.18)',
+              overflow: 'hidden',
+              position: 'relative',
+            }}
           >
-            <Text variant="labelLarge" tone={isActive ? 'primary' : 'tertiary'}>
+            <Text variant="labelLarge" tone="inverse" style={{ opacity: isActive ? 1 : 0.72 }}>
               {item.label}
             </Text>
-            <View
-              style={{
-                height: 2,
-                borderRadius: radius.xs,
-                backgroundColor: isActive ? colors.chrome[200] : 'transparent',
-              }}
-            />
-          </Pressable>
+          </AnimatedPressable>
         );
       })}
     </View>

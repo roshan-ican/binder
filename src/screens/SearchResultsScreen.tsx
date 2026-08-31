@@ -2,19 +2,22 @@ import { useMemo, useState } from 'react';
 import { View } from 'react-native';
 import {
   BackHeader,
+  Card,
   Chip,
   EnquiryCard,
+  Icon,
   ProfileCard,
   Screen,
   SearchField,
   SkeletonCard,
   Text,
   TopTabs,
+  TrustBadge,
 } from '../components';
-import { businesses, opportunities } from '../data/mock';
-import { spacing } from '../theme';
+import { businesses, jobOpportunities, opportunities, type UserRole } from '../data/mock';
+import { colors, size, spacing } from '../theme';
 
-type ResultTab = 'profiles' | 'enquiries';
+type ResultTab = 'profiles' | 'enquiries' | 'jobs';
 
 /**
  * The query stays visible, filters stay visible, the count updates, and a
@@ -22,18 +25,21 @@ type ResultTab = 'profiles' | 'enquiries';
  */
 export function SearchResultsScreen({
   query,
+  role,
   onQueryChange,
   onBack,
   onOpenBusiness,
   loading = false,
 }: {
   query: string;
+  role: UserRole;
   onQueryChange: (value: string) => void;
   onBack: () => void;
   onOpenBusiness: (id: string) => void;
   loading?: boolean;
 }) {
-  const [tab, setTab] = useState<ResultTab>('profiles');
+  const isJobSeeker = role === 'job-seeker';
+  const [tab, setTab] = useState<ResultTab>(isJobSeeker ? 'jobs' : 'profiles');
   const [cityOnly, setCityOnly] = useState(true);
   const [verifiedOnly, setVerifiedOnly] = useState(false);
 
@@ -49,6 +55,18 @@ export function SearchResultsScreen({
     });
   }, [query, cityOnly, verifiedOnly]);
 
+  const jobResults = useMemo(() => {
+    const term = query.trim().toLowerCase();
+    return jobOpportunities.filter((job) => {
+      const matchesTerm =
+        term.length === 0 ||
+        `${job.title} ${job.company} ${job.city} ${job.workType}`.toLowerCase().includes(term);
+      const matchesCity = !cityOnly || job.city === 'Kanpur';
+      const matchesTrust = !verifiedOnly || job.trust === 'verified';
+      return matchesTerm && matchesCity && matchesTrust;
+    });
+  }, [query, cityOnly, verifiedOnly]);
+
   // Never an empty screen: widen the region and say so.
   const widened = results.length === 0 && cityOnly;
   const shown = widened
@@ -59,7 +77,11 @@ export function SearchResultsScreen({
     <Screen density="dense">
       <BackHeader onBack={onBack} />
 
-      <SearchField value={query} onChangeText={onQueryChange} placeholder="Search Binder" />
+      <SearchField
+        value={query}
+        onChangeText={onQueryChange}
+        placeholder={isJobSeeker ? 'Search jobs, companies, skills...' : 'Search Binder'}
+      />
 
       <View style={{ flexDirection: 'row', gap: spacing[2], marginTop: spacing[3], flexWrap: 'wrap' }}>
         <Chip label="Filters" icon="sliders" />
@@ -69,10 +91,17 @@ export function SearchResultsScreen({
 
       <View style={{ marginTop: spacing[2] }}>
         <TopTabs
-          items={[
-            { key: 'profiles', label: 'Profiles' },
-            { key: 'enquiries', label: 'Enquiries' },
-          ]}
+          items={
+            isJobSeeker
+              ? [
+                  { key: 'jobs', label: 'Jobs' },
+                  { key: 'profiles', label: 'Companies' },
+                ]
+              : [
+                  { key: 'profiles', label: 'Profiles' },
+                  { key: 'enquiries', label: 'Enquiries' },
+                ]
+          }
           active={tab}
           onChange={setTab}
         />
@@ -83,6 +112,42 @@ export function SearchResultsScreen({
           <SkeletonCard />
           <SkeletonCard />
           <SkeletonCard />
+        </View>
+      ) : tab === 'jobs' ? (
+        <View style={{ gap: spacing[3], marginTop: spacing[4] }}>
+          <Text variant="bodySmall" tone="tertiary">
+            {jobResults.length} {jobResults.length === 1 ? 'job' : 'jobs'}
+            {cityOnly ? ' in Kanpur' : ''}
+          </Text>
+          {jobResults.map((job) => (
+            <Card key={job.id} accessibilityLabel={`${job.title} at ${job.company}`}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: spacing[3] }}>
+                <View style={{ flex: 1, gap: spacing[1] }}>
+                  <Text variant="labelLarge">{job.title}</Text>
+                  <Text variant="bodySmall" tone="secondary">
+                    {job.company} · {job.city}
+                  </Text>
+                  <TrustBadge signal={job.trust} />
+                </View>
+                <Icon name="chevronRight" size={size.icon} color={colors.text.tertiary} />
+              </View>
+              <Text variant="bodySmall" tone="secondary" style={{ marginTop: spacing[4] }}>
+                {job.workType} · {job.salary}
+              </Text>
+              <Text variant="bodySmall" tone="tertiary" style={{ marginTop: spacing[1] }}>
+                {job.fitNote} · {job.activity}
+              </Text>
+            </Card>
+          ))}
+
+          {jobResults.length === 0 ? (
+            <View style={{ gap: spacing[3], paddingVertical: spacing[8] }}>
+              <Text variant="heading3">No matching jobs yet.</Text>
+              <Text variant="body" tone="secondary">
+                Save this search and we'll alert you when a matching role opens.
+              </Text>
+            </View>
+          ) : null}
         </View>
       ) : tab === 'profiles' ? (
         <View style={{ gap: spacing[3], marginTop: spacing[4] }}>

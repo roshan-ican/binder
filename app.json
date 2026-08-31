@@ -14,6 +14,8 @@
       "image": "./assets/splash-icon.png"
     },
     "ios": {
+      "bundleIdentifier": "com.roshan.binder",
+      "buildNumber": "1",
       "supportsTablet": true
     },
     "android": {
