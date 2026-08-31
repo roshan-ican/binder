@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
@@ -9,6 +9,7 @@ import { SplashScreen } from './src/screens/SplashScreen';
 import { colors } from './src/theme';
 
 export default function App() {
+  const { width, height } = useWindowDimensions();
   const [showSplash, setShowSplash] = useState(true);
   const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
@@ -27,22 +28,38 @@ export default function App() {
   // Keep the launch canvas dark while fonts load. If a font fails, continue
   // with the system fallback instead of trapping the user here.
   if (!fontsLoaded && !fontError) {
-    return <View style={{ flex: 1, backgroundColor: colors.bg.primary }} />;
+    return <View style={[styles.appShell, { width, height }]} />;
   }
 
   if (showSplash) {
     return (
-      <>
+      <View style={[styles.appShell, { width, height }]}>
         <StatusBar style="light" />
         <SplashScreen />
-      </>
+      </View>
     );
   }
 
   return (
-    <SafeAreaProvider>
-      <StatusBar style="light" />
-      <AppNavigator />
-    </SafeAreaProvider>
+    <View style={[styles.appShell, { width, height }]}>
+      <SafeAreaProvider style={styles.safeAreaProvider}>
+        <StatusBar style="light" />
+        <AppNavigator />
+      </SafeAreaProvider>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  appShell: {
+    flex: 1,
+    alignSelf: 'stretch',
+    backgroundColor: colors.bg.primary,
+    overflow: 'hidden',
+  },
+  safeAreaProvider: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+});
