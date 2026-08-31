@@ -14,6 +14,7 @@ import {
   SectionHeader,
   Text,
   TrustBadge,
+  JobSwipeDeck,
 } from '../components';
 import {
   businesses,
@@ -25,6 +26,7 @@ import {
   type Business,
   type Enquiry,
   type JobOpportunity,
+  type JobSeekerProfileData,
   type UserRole,
 } from '../data/mock';
 import { colors, rhythm, size, spacing } from '../theme';
@@ -68,6 +70,9 @@ const locationOptions = [
 export function DiscoverScreen({
   query,
   role,
+  jobSeekerProfile,
+  jobSwipeCreditsUsed = 0,
+  onJobSwipe,
   onQueryChange,
   onSearch,
   onOpenBusiness,
@@ -76,6 +81,9 @@ export function DiscoverScreen({
 }: {
   query: string;
   role: UserRole;
+  jobSeekerProfile?: JobSeekerProfileData | null;
+  jobSwipeCreditsUsed?: number;
+  onJobSwipe?: () => void;
   onQueryChange: (value: string) => void;
   onSearch: () => void;
   onOpenBusiness: (id: string) => void;
@@ -101,14 +109,16 @@ export function DiscoverScreen({
   );
 
   const filteredJobs = useMemo(
-    () =>
-      jobOpportunities.filter((job) => {
+    () => {
+      const filtered = jobOpportunities.filter((job) => {
         if (jobBrowse === 'nearby') return matchesNearbyCity(job.city);
         if (!matchesJobLocation(job, location)) return false;
         if (jobBrowse === 'all-jobs') return true;
         return job.jobType === jobBrowse;
-      }),
-    [jobBrowse, location],
+      });
+      return rankJobs(filtered, jobSeekerProfile);
+    },
+    [jobBrowse, jobSeekerProfile, location],
   );
 
   const filteredOpportunities = useMemo(
@@ -122,6 +132,18 @@ export function DiscoverScreen({
   const primaryCount = isJobSeeker || showingBusinessJobs ? strongJobs : strongMatches;
   const primaryLabel = primaryCount === 1 ? 'strong match today' : 'strong matches today';
 
+  if (isJobSeeker && jobSeekerProfile) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg.primary }}>
+        <JobSwipeDeck
+          jobs={rankJobs(jobOpportunities, jobSeekerProfile)}
+          creditsUsed={jobSwipeCreditsUsed}
+          onDecision={() => onJobSwipe?.()}
+        />
+      </View>
+    );
+  }
+
   return (
     <Screen>
       <View style={{ paddingTop: spacing[4], gap: spacing[1] }}>
@@ -129,7 +151,7 @@ export function DiscoverScreen({
           Binder
         </Text>
         <Text variant="heading1" accessibilityRole="header">
-          Good morning, {isJobSeeker ? candidate.person : me.person}
+          Good morning, {isJobSeeker ? (jobSeekerProfile?.fullName ?? candidate.person) : me.person}
         </Text>
       </View>
 
@@ -371,6 +393,22 @@ function matchesOpportunityLocation(opportunity: Enquiry, location: LocationKey)
 
 function matchesNearbyCity(city: string) {
   return city === 'Kanpur' || city === 'Lucknow';
+}
+
+export function rankJobs(jobs: JobOpportunity[], profile?: JobSeekerProfileData | null) {
+  if (!profile) return jobs;
+
+  return jobs
+    .map((job, index) => ({ job, index, score: jobMatchScore(job, profile) }))
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .map(({ job }) => job);
+}
+
+function jobMatchScore(job: JobOpportunity, profile: JobSeekerProfileData) {
+  const desiredRoleMatch = profile.desiredRoleIds.includes(job.roleId) ? 100 : 0;
+  const professionMatch = profile.professionId === job.professionId ? 10 : 0;
+  const skillMatches = job.requiredSkillIds.filter((id) => profile.skillIds.includes(id)).length;
+  return desiredRoleMatch + professionMatch + skillMatches;
 }
 
 function LocationSelector({ label, onPress }: { label: string; onPress: () => void }) {

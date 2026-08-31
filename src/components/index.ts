@@ -21,3 +21,5 @@ export { EmptyState, InlineError, Skeleton, SkeletonCard, OfflineBanner } from '
 export { BottomTabs, TopTabs, type TabKey } from './Navigation';
 export { Screen, ScreenHeading, BackHeader } from './Screen';
 export { SearchField } from './SearchField';
+export { TaxonomyPicker } from './TaxonomyPicker';
+export { JobSwipeDeck } from './JobSwipeDeck';

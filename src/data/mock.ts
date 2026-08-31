@@ -43,6 +43,29 @@ export type Enquiry = {
 
 export type UserRole = 'business' | 'job-seeker';
 
+export type BusinessProfileData = {
+  gstin: string;
+  businessName: string;
+  contactName: string;
+  industry: string;
+  city: string;
+  offers: string[];
+  needs: string[];
+  verified: boolean;
+};
+
+export type JobSeekerProfileData = {
+  fullName: string;
+  email: string;
+  city: string;
+  headline: string;
+  professionId: string;
+  skillIds: string[];
+  desiredRoleIds: string[];
+  linkedInUrl?: string;
+  emailVerified: boolean;
+};
+
 export type JobOpportunity = {
   id: string;
   jobType: JobType;
@@ -57,6 +80,9 @@ export type JobOpportunity = {
   trust: TrustSignal;
   match?: MatchQuality;
   whyItFits: string[];
+  professionId: string;
+  roleId: string;
+  requiredSkillIds: string[];
 };
 
 export type JobType = 'full-time' | 'part-time' | 'contract' | 'internship';
@@ -291,6 +317,9 @@ export const jobOpportunities: JobOpportunity[] = [
     trust: 'verified',
     match: 'strong',
     whyItFits: ['Leather manufacturing experience', 'Same city', 'Quality control background'],
+    professionId: 'manufacturing-production',
+    roleId: 'production-supervisor',
+    requiredSkillIds: ['manufacturing', 'production-planning', 'quality-control', 'team-leadership'],
   },
   {
     id: 'buyer-coordinator',
@@ -306,6 +335,9 @@ export const jobOpportunities: JobOpportunity[] = [
     trust: 'proven',
     match: 'good',
     whyItFits: ['Buyer follow-up', 'Vendor coordination', 'Local commute'],
+    professionId: 'sourcing-procurement',
+    roleId: 'buyer-coordinator',
+    requiredSkillIds: ['buyer-coordination', 'vendor-management', 'operations'],
   },
   {
     id: 'sourcing-associate',
@@ -321,6 +353,9 @@ export const jobOpportunities: JobOpportunity[] = [
     trust: 'documents',
     match: 'potential',
     whyItFits: ['Supplier sourcing', 'North India network', 'Documents provided'],
+    professionId: 'sourcing-procurement',
+    roleId: 'sourcing-associate',
+    requiredSkillIds: ['sourcing', 'vendor-management', 'buyer-coordination'],
   },
   {
     id: 'quality-check-intern',
@@ -336,6 +371,9 @@ export const jobOpportunities: JobOpportunity[] = [
     trust: 'documents',
     match: 'good',
     whyItFits: ['Quality control interest', 'Same city', 'Retail fabric exposure'],
+    professionId: 'quality-compliance',
+    roleId: 'quality-check-intern',
+    requiredSkillIds: ['quality-control', 'manufacturing'],
   },
   {
     id: 'inventory-assistant',
@@ -351,6 +389,9 @@ export const jobOpportunities: JobOpportunity[] = [
     trust: 'proven',
     match: 'potential',
     whyItFits: ['Inventory work', 'Local commute', 'Flexible hours'],
+    professionId: 'operations-administration',
+    roleId: 'inventory-assistant',
+    requiredSkillIds: ['inventory-management', 'operations', 'warehouse-operations'],
   },
 ];
 

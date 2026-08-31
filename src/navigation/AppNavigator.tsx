@@ -2,14 +2,16 @@ import { useEffect, useRef, useState } from 'react';
 import { Animated, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomTabs, type TabKey } from '../components';
-import type { UserRole } from '../data/mock';
+import type { BusinessProfileData, JobSeekerProfileData, UserRole } from '../data/mock';
 import { colors, motion } from '../theme';
 import { BusinessProfileScreen } from '../screens/BusinessProfileScreen';
+import { BusinessVerificationScreen } from '../screens/BusinessVerificationScreen';
 import { ConversationScreen } from '../screens/ConversationScreen';
 import { DiscoverScreen } from '../screens/DiscoverScreen';
 import { EnquiriesScreen } from '../screens/EnquiriesScreen';
 import { EnquiryDetailScreen } from '../screens/EnquiryDetailScreen';
 import { InboxScreen } from '../screens/InboxScreen';
+import { JobSeekerOnboardingScreen } from '../screens/JobSeekerOnboardingScreen';
 import { OpportunitiesScreen } from '../screens/OpportunitiesScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { SearchResultsScreen } from '../screens/SearchResultsScreen';
@@ -22,6 +24,8 @@ import { WelcomeScreen } from '../screens/WelcomeScreen';
  */
 type Route =
   | { name: 'welcome' }
+  | { name: 'business-verification' }
+  | { name: 'job-seeker-onboarding' }
   | { name: 'tabs' }
   | { name: 'search' }
   | { name: 'business'; id: string }
@@ -35,6 +39,9 @@ export function AppNavigator() {
   const [tab, setTab] = useState<TabKey>('discover');
   const [query, setQuery] = useState('');
   const [role, setRole] = useState<UserRole>('business');
+  const [businessProfile, setBusinessProfile] = useState<BusinessProfileData | null>(null);
+  const [jobSeekerProfile, setJobSeekerProfile] = useState<JobSeekerProfileData | null>(null);
+  const [jobSwipeCreditsUsed, setJobSwipeCreditsUsed] = useState(0);
 
   const route = stack[stack.length - 1];
   const push = (next: Route) => setStack((current) => [...current, next]);
@@ -46,9 +53,35 @@ export function AppNavigator() {
       <WelcomeScreen
         onSelectRole={(nextRole) => {
           setRole(nextRole);
-          reset({ name: 'tabs' });
+          reset({ name: nextRole === 'business' ? 'business-verification' : 'job-seeker-onboarding' });
         }}
         onExplore={() => reset({ name: 'tabs' })}
+      />
+    );
+  }
+
+  if (route.name === 'business-verification') {
+    return (
+      <BusinessVerificationScreen
+        onVerified={(profile) => {
+          setBusinessProfile(profile);
+        }}
+        onExplore={() => {
+          setTab('discover');
+          reset({ name: 'tabs' });
+        }}
+      />
+    );
+  }
+
+  if (route.name === 'job-seeker-onboarding') {
+    return (
+      <JobSeekerOnboardingScreen
+        onComplete={setJobSeekerProfile}
+        onExplore={() => {
+          setTab('discover');
+          reset({ name: 'tabs' });
+        }}
       />
     );
   }
@@ -98,6 +131,10 @@ export function AppNavigator() {
             onOpenEnquiry={(id) => push({ name: 'enquiry', id })}
             onOpenOpportunities={() => push({ name: 'opportunities' })}
             onOpenConversation={(id) => push({ name: 'conversation', id })}
+            businessProfile={businessProfile}
+            jobSeekerProfile={jobSeekerProfile}
+            jobSwipeCreditsUsed={jobSwipeCreditsUsed}
+            onJobSwipe={() => setJobSwipeCreditsUsed((count) => Math.min(count + 1, 10))}
           />
         );
     }
@@ -161,6 +198,10 @@ function TabScreen({
   onOpenEnquiry,
   onOpenOpportunities,
   onOpenConversation,
+  businessProfile,
+  jobSeekerProfile,
+  jobSwipeCreditsUsed,
+  onJobSwipe,
 }: {
   tab: TabKey;
   role: UserRole;
@@ -171,6 +212,10 @@ function TabScreen({
   onOpenEnquiry: (id: string) => void;
   onOpenOpportunities: () => void;
   onOpenConversation: (id: string) => void;
+  businessProfile: BusinessProfileData | null;
+  jobSeekerProfile: JobSeekerProfileData | null;
+  jobSwipeCreditsUsed: number;
+  onJobSwipe: () => void;
 }) {
   switch (tab) {
     case 'enquiries':
@@ -178,13 +223,16 @@ function TabScreen({
     case 'inbox':
       return <InboxScreen role={role} onOpenConversation={onOpenConversation} />;
     case 'profile':
-      return <ProfileScreen role={role} />;
+      return <ProfileScreen role={role} businessProfile={businessProfile} jobSeekerProfile={jobSeekerProfile} />;
     case 'discover':
     default:
       return (
         <DiscoverScreen
           query={query}
           role={role}
+          jobSeekerProfile={jobSeekerProfile}
+          jobSwipeCreditsUsed={jobSwipeCreditsUsed}
+          onJobSwipe={onJobSwipe}
           onQueryChange={onQueryChange}
           onSearch={onSearch}
           onOpenBusiness={onOpenBusiness}

@@ -12,18 +12,33 @@ import {
   TextButton,
   TrustBadge,
 } from '../components';
-import { candidate, me, type UserRole } from '../data/mock';
+import { candidate, me, type BusinessProfileData, type JobSeekerProfileData, type UserRole } from '../data/mock';
+import { professions, roles, skills, taxonomyLabel } from '../data/jobTaxonomy';
 import { colors, rhythm, size, spacing } from '../theme';
 
-export function ProfileScreen({ role }: { role: UserRole }) {
+export function ProfileScreen({
+  role,
+  businessProfile,
+  jobSeekerProfile,
+}: {
+  role: UserRole;
+  businessProfile?: BusinessProfileData | null;
+  jobSeekerProfile?: JobSeekerProfileData | null;
+}) {
   const isJobSeeker = role === 'job-seeker';
-  const profileName = isJobSeeker ? candidate.person : me.business;
-  const profileMeta = isJobSeeker ? `${candidate.headline} · ${candidate.city}` : `${me.industry} · ${me.city}`;
-  const completeness = isJobSeeker ? candidate.completeness : me.completeness;
+  const profileName = isJobSeeker ? (jobSeekerProfile?.fullName ?? candidate.person) : (businessProfile?.businessName ?? me.business);
+  const profileMeta = isJobSeeker
+    ? `${jobSeekerProfile?.headline ?? candidate.headline} · ${jobSeekerProfile?.city ?? candidate.city}`
+    : `${businessProfile?.industry ?? me.industry} · ${businessProfile?.city ?? me.city}`;
+  const completeness = isJobSeeker ? (jobSeekerProfile ? 100 : candidate.completeness) : (businessProfile ? 100 : me.completeness);
   const offerTitle = isJobSeeker ? 'Your skills' : 'What you offer';
   const needTitle = isJobSeeker ? 'Roles you want' : 'What you need';
-  const offers = isJobSeeker ? candidate.skills : me.offers;
-  const needs = isJobSeeker ? candidate.seeking : me.needs;
+  const offers = isJobSeeker
+    ? (jobSeekerProfile?.skillIds.map((id) => taxonomyLabel(id, skills)) ?? candidate.skills)
+    : (businessProfile?.offers ?? me.offers);
+  const needs = isJobSeeker
+    ? (jobSeekerProfile?.desiredRoleIds.map((id) => taxonomyLabel(id, roles)) ?? candidate.seeking)
+    : (businessProfile?.needs ?? me.needs);
 
   return (
     <Screen>
@@ -36,6 +51,9 @@ export function ProfileScreen({ role }: { role: UserRole }) {
           <Text variant="bodySmall" tone="secondary">
             {profileMeta}
           </Text>
+          {!isJobSeeker && businessProfile ? (
+            <Text variant="bodySmall" tone="tertiary">Managed by {businessProfile.contactName}</Text>
+          ) : null}
           <TextButton label={isJobSeeker ? 'View candidate profile' : 'View public profile'} />
         </View>
       </View>
@@ -43,18 +61,25 @@ export function ProfileScreen({ role }: { role: UserRole }) {
       {/* Completeness is stated plainly. No progress arcade. */}
       <Card style={{ marginTop: spacing[6], gap: spacing[3] }}>
         <Text variant="body">Your profile is {completeness}% complete.</Text>
-        <Text variant="bodySmall" tone="secondary">
+        {completeness < 100 ? <Text variant="bodySmall" tone="secondary">
           {isJobSeeker ? 'Add two details to improve job matching.' : 'Add two details to improve matching.'}
-        </Text>
-        <View style={{ gap: spacing[2], marginTop: spacing[1] }}>
+        </Text> : <TrustBadge signal="verified" detail={isJobSeeker ? 'Candidate profile complete' : 'Demo business verification complete'} />}
+        {completeness < 100 ? <View style={{ gap: spacing[2], marginTop: spacing[1] }}>
           <Text variant="bodySmall" tone="tertiary">
             {isJobSeeker ? '+ Resume or work history' : '+ Monthly capacity'}
           </Text>
           <Text variant="bodySmall" tone="tertiary">
             {isJobSeeker ? '+ Expected salary' : '+ Registration document'}
           </Text>
-        </View>
+        </View> : null}
       </Card>
+
+      {isJobSeeker && jobSeekerProfile ? (
+        <View style={{ marginTop: rhythm.sectionToSection, gap: spacing[3] }}>
+          <SectionHeader title="Primary profession" />
+          <Chip label={taxonomyLabel(jobSeekerProfile.professionId, professions)} />
+        </View>
+      ) : null}
 
       <View style={{ marginTop: rhythm.sectionToSection, gap: spacing[3] }}>
         <SectionHeader title={offerTitle} action="Edit" />
@@ -76,9 +101,16 @@ export function ProfileScreen({ role }: { role: UserRole }) {
 
       <View style={{ marginTop: rhythm.sectionToSection, gap: spacing[3] }}>
         <SectionHeader title={isJobSeeker ? 'Resume & verification' : 'Documents & verification'} />
-        <TrustBadge signal="verified" detail={isJobSeeker ? 'Phone · verified 12 Aug 2026' : 'GST · verified 12 Aug 2026'} />
-        <TrustBadge signal="pending" detail={isJobSeeker ? 'Work history' : 'Company registration'} />
-        <TrustBadge signal="documents" detail={isJobSeeker ? 'Resume · not verified' : 'Catalogue · not verified'} />
+        <TrustBadge
+          signal="verified"
+          detail={isJobSeeker ? (jobSeekerProfile ? `${jobSeekerProfile.email} · email verified` : 'Phone · verified 12 Aug 2026') : businessProfile ? `GSTIN ${businessProfile.gstin} · format verified` : 'GST · verified 12 Aug 2026'}
+        />
+        {isJobSeeker || !businessProfile ? (
+          <TrustBadge signal="pending" detail={isJobSeeker ? 'Work history' : 'Company registration'} />
+        ) : null}
+        {isJobSeeker || !businessProfile ? (
+          <TrustBadge signal="documents" detail={isJobSeeker ? 'Resume · not verified' : 'Catalogue · not verified'} />
+        ) : null}
       </View>
 
       <Divider style={{ marginTop: rhythm.sectionToSection }} />

@@ -8,11 +8,17 @@
     "scheme": "binder",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#070707",
-    "splash": {
-      "backgroundColor": "#070707",
-      "resizeMode": "contain",
-      "image": "./assets/splash-icon.png"
-    },
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#070707",
+          "resizeMode": "contain",
+          "image": "./assets/splash-icon.png"
+        }
+      ],
+      "expo-font"
+    ],
     "ios": {
       "bundleIdentifier": "com.roshan.binder",
       "buildNumber": "1",
