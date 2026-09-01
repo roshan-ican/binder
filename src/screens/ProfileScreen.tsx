@@ -54,7 +54,7 @@ export function ProfileScreen({
           <Text variant="bodySmall" tone="secondary">
             {profileMeta}
           </Text>
-          {!isJobSeeker && businessProfile ? (
+          {!isJobSeeker && businessProfile?.contactName ? (
             <Text variant="bodySmall" tone="tertiary">Managed by {businessProfile.contactName}</Text>
           ) : null}
           <TextButton label={isJobSeeker ? 'View candidate profile' : 'View public profile'} />
@@ -66,7 +66,7 @@ export function ProfileScreen({
         <Text variant="body">Your profile is {completeness}% complete.</Text>
         {completeness < 100 ? <Text variant="bodySmall" tone="secondary">
           {isJobSeeker ? 'Add two details to improve job matching.' : 'Add two details to improve matching.'}
-        </Text> : isJobSeeker ? <TrustBadge signal="verified" detail="Candidate profile complete" /> : <TrustBadge signal={businessProfile?.verificationStatus === 'verified' ? 'verified' : 'pending'} detail={businessProfile?.verificationStatus === 'verified' ? 'GST verified' : 'Unverified business'} />}
+        </Text> : isJobSeeker ? <TrustBadge signal="verified" detail="Candidate profile complete" /> : <TrustBadge signal={businessProfile?.verificationStatus === 'verified' ? 'verified' : 'pending'} detail={businessProfile?.verificationStatus === 'verified' ? 'Business verified · demo' : 'Unverified business'} />}
         {completeness < 100 ? <View style={{ gap: spacing[2], marginTop: spacing[1] }}>
           <Text variant="bodySmall" tone="tertiary">
             {isJobSeeker ? '+ Resume or work history' : '+ Monthly capacity'}
@@ -103,13 +103,13 @@ export function ProfileScreen({
       </View>
 
       <View style={{ marginTop: rhythm.sectionToSection, gap: spacing[3] }}>
-        <SectionHeader title={isJobSeeker ? 'Resume & verification' : 'Documents & verification'} />
-        <TrustBadge signal={isJobSeeker || businessProfile?.verificationStatus === 'verified' ? 'verified' : 'pending'} detail={isJobSeeker ? (jobSeekerProfile ? `${jobSeekerProfile.email} · email verified` : 'Phone · verified 12 Aug 2026') : businessProfile?.verificationStatus === 'verified' ? `GSTIN ${businessProfile.gstin}` : 'Unverified business · GST can be added later'} />
+        <SectionHeader title={isJobSeeker ? 'Resume & verification' : 'Business verification'} />
+        <TrustBadge signal={isJobSeeker || businessProfile?.verificationStatus === 'verified' ? 'verified' : 'pending'} detail={isJobSeeker ? (jobSeekerProfile ? `${jobSeekerProfile.email} · email verified` : 'Phone · verified 12 Aug 2026') : businessProfile?.verificationStatus === 'verified' ? (businessProfile.gstin ? `Verified · GSTIN ${businessProfile.gstin}` : 'Verified business · demo') : 'Unverified business'} />
         {!isJobSeeker && businessProfile?.verificationStatus !== 'verified' ? <Button label="Verify your business" variant="secondary" onPress={onVerifyBusiness} /> : null}
-        {isJobSeeker || !businessProfile ? (
+        {isJobSeeker ? (
           <TrustBadge signal="pending" detail={isJobSeeker ? 'Work history' : 'Company registration'} />
         ) : null}
-        {isJobSeeker || !businessProfile ? (
+        {isJobSeeker ? (
           <TrustBadge signal="documents" detail={isJobSeeker ? 'Resume · not verified' : 'Catalogue · not verified'} />
         ) : null}
       </View>
