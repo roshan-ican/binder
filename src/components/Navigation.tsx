@@ -6,9 +6,10 @@ import { ChromeSurface } from './ChromeSurface';
 import { Icon, type IconName } from './Icon';
 import { Text } from './Text';
 
-export type TabKey = 'discover' | 'enquiries' | 'inbox' | 'profile';
+export type TabKey = 'match' | 'discover' | 'enquiries' | 'inbox' | 'profile';
 
 const businessTabs: { key: TabKey; label: string; icon: IconName }[] = [
+  { key: 'match', label: 'Match', icon: 'heart' },
   { key: 'discover', label: 'Discover', icon: 'search' },
   { key: 'enquiries', label: 'Enquiries', icon: 'document' },
   { key: 'inbox', label: 'Inbox', icon: 'message' },
@@ -16,13 +17,14 @@ const businessTabs: { key: TabKey; label: string; icon: IconName }[] = [
 ];
 
 const jobSeekerTabs: { key: TabKey; label: string; icon: IconName }[] = [
+  { key: 'match', label: 'Match', icon: 'heart' },
   { key: 'discover', label: 'Jobs', icon: 'search' },
   { key: 'enquiries', label: 'Applied', icon: 'document' },
   { key: 'inbox', label: 'Inbox', icon: 'message' },
   { key: 'profile', label: 'Profile', icon: 'users' },
 ];
 
-/** Four tabs in V1. No floating centre button. */
+/** Role-aware primary tabs. No floating centre button. */
 export function BottomTabs({
   role = 'business',
   active,

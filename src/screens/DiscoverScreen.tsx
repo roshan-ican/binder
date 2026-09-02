@@ -14,7 +14,6 @@ import {
   SectionHeader,
   Text,
   TrustBadge,
-  JobSwipeDeck,
 } from '../components';
 import {
   businesses,
@@ -133,19 +132,6 @@ export function DiscoverScreen({
   const strongJobs = filteredJobs.filter((job) => job.match === 'strong').length;
   const primaryCount = isJobSeeker || showingBusinessJobs ? strongJobs : strongMatches;
   const primaryLabel = primaryCount === 1 ? 'strong match today' : 'strong matches today';
-
-  if (isJobSeeker && jobSeekerProfile) {
-    return (
-      <View style={{ flex: 1, backgroundColor: colors.bg.primary }}>
-        <JobSwipeDeck
-          jobs={rankJobs(jobOpportunities, jobSeekerProfile)}
-          creditsUsed={jobSwipeCreditsUsed}
-          onDecision={() => onJobSwipe?.()}
-          onOpenJob={(job) => onOpenJob?.(job.id)}
-        />
-      </View>
-    );
-  }
 
   return (
     <Screen>

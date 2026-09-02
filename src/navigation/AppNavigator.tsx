@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BottomTabs, BusinessTrustGate, type TabKey } from '../components';
+import { BottomTabs, BusinessTrustGate, type BusinessMatchItem, type TabKey } from '../components';
 import type { BusinessProfileData, JobSeekerProfileData, UserRole } from '../data/mock';
 import { colors, motion } from '../theme';
 import { BusinessProfileScreen } from '../screens/BusinessProfileScreen';
@@ -13,6 +13,7 @@ import { EnquiriesScreen } from '../screens/EnquiriesScreen';
 import { EnquiryDetailScreen } from '../screens/EnquiryDetailScreen';
 import { InboxScreen } from '../screens/InboxScreen';
 import { JobSeekerOnboardingScreen } from '../screens/JobSeekerOnboardingScreen';
+import { MatchScreen } from '../screens/MatchScreen';
 import { OpportunitiesScreen } from '../screens/OpportunitiesScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { SearchResultsScreen } from '../screens/SearchResultsScreen';
@@ -62,12 +63,13 @@ type Route =
 export function AppNavigator() {
   const insets = useSafeAreaInsets();
   const [stack, setStack] = useState<Route[]>([{ name: 'welcome' }]);
-  const [tab, setTab] = useState<TabKey>('discover');
+  const [tab, setTab] = useState<TabKey>('match');
   const [query, setQuery] = useState('');
   const [role, setRole] = useState<UserRole>('business');
   const [businessProfile, setBusinessProfile] = useState<BusinessProfileData | null>(null);
   const [jobSeekerProfile, setJobSeekerProfile] = useState<JobSeekerProfileData | null>(null);
   const [jobSwipeCreditsUsed, setJobSwipeCreditsUsed] = useState(0);
+  const [businessSwipeCreditsUsed, setBusinessSwipeCreditsUsed] = useState(0);
   const [trustGateOpen, setTrustGateOpen] = useState(false);
   const pendingTrustAction = useRef<null | (() => void)>(null);
 
@@ -88,14 +90,14 @@ export function AppNavigator() {
           setRole(nextRole);
           reset({ name: nextRole === 'business' ? 'business-onboarding' : 'job-seeker-onboarding' });
         }}
-        onExplore={() => reset({ name: 'tabs' })}
+        onExplore={() => { setTab('discover'); reset({ name: 'tabs' }); }}
         onSignIn={() => push({ name: 'sign-in' })}
       />
     );
   }
 
   if (route.name === 'sign-in') {
-    return <SignInScreen onBack={pop} onContinue={(nextRole) => { setRole(nextRole); setTab('discover'); reset({ name: 'tabs' }); }} />;
+    return <SignInScreen onBack={pop} onContinue={(nextRole) => { setRole(nextRole); setTab('match'); reset({ name: 'tabs' }); }} />;
   }
 
   if (route.name === 'business-onboarding') {
@@ -104,7 +106,7 @@ export function AppNavigator() {
 
   if (route.name === 'business-verification' && businessProfile) {
     const finish = () => {
-      if (route.source === 'onboarding') { setTab('discover'); reset({ name: 'tabs' }); return; }
+      if (route.source === 'onboarding') { setTab('match'); reset({ name: 'tabs' }); return; }
       pop();
       const action = pendingTrustAction.current;
       pendingTrustAction.current = null;
@@ -128,7 +130,7 @@ export function AppNavigator() {
       <JobSeekerOnboardingScreen
         onComplete={setJobSeekerProfile}
         onExplore={() => {
-          setTab('discover');
+          setTab('match');
           reset({ name: 'tabs' });
         }}
       />
@@ -235,7 +237,16 @@ export function AppNavigator() {
             businessProfile={businessProfile}
             jobSeekerProfile={jobSeekerProfile}
             jobSwipeCreditsUsed={jobSwipeCreditsUsed}
+            businessSwipeCreditsUsed={businessSwipeCreditsUsed}
             onJobSwipe={() => setJobSwipeCreditsUsed((count) => Math.min(count + 1, 10))}
+            onBusinessDecision={(decision, item) => {
+              setBusinessSwipeCreditsUsed((count) => Math.min(count + 1, 10));
+              if (decision === 'interested') {
+                runTrustAction(() => item.kind === 'business'
+                  ? push({ name: 'business', id: item.business.id })
+                  : push({ name: 'enquiry', id: item.enquiry.id }));
+              }
+            }}
             onTrustAction={runTrustAction}
             onVerifyBusiness={() => push({ name: 'business-verification', source: 'profile' })}
           />
@@ -311,7 +322,9 @@ function TabScreen({
   businessProfile,
   jobSeekerProfile,
   jobSwipeCreditsUsed,
+  businessSwipeCreditsUsed,
   onJobSwipe,
+  onBusinessDecision,
   onTrustAction,
   onVerifyBusiness,
 }: {
@@ -333,11 +346,15 @@ function TabScreen({
   businessProfile: BusinessProfileData | null;
   jobSeekerProfile: JobSeekerProfileData | null;
   jobSwipeCreditsUsed: number;
+  businessSwipeCreditsUsed: number;
   onJobSwipe: () => void;
+  onBusinessDecision: (decision: 'pass' | 'interested', item: BusinessMatchItem) => void;
   onTrustAction: (action: () => void) => void;
   onVerifyBusiness: () => void;
 }) {
   switch (tab) {
+    case 'match':
+      return <MatchScreen role={role} businessProfile={businessProfile} jobSeekerProfile={jobSeekerProfile} businessSwipeCreditsUsed={businessSwipeCreditsUsed} jobSwipeCreditsUsed={jobSwipeCreditsUsed} onBusinessDecision={onBusinessDecision} onJobSwipe={onJobSwipe} onOpenBusiness={onOpenBusiness} onOpenEnquiry={onOpenEnquiry} onOpenJob={onOpenJob} />;
     case 'enquiries':
       return <EnquiriesScreen role={role} onOpenEnquiry={onOpenEnquiry} onCreateEnquiry={onCreateEnquiry} onOpenJob={onOpenJob} onOpenApplication={onOpenApplication} />;
     case 'inbox':
