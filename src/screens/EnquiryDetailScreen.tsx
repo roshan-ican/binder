@@ -17,10 +17,12 @@ export function EnquiryDetailScreen({
   enquiryId,
   onBack,
   onOpenBusiness,
+  onEdit,
 }: {
   enquiryId: string;
   onBack: () => void;
   onOpenBusiness: (id: string) => void;
+  onEdit?: () => void;
 }) {
   const enquiry =
     myEnquiries.find((item) => item.id === enquiryId) ??
@@ -29,7 +31,7 @@ export function EnquiryDetailScreen({
 
   return (
     <Screen>
-      <BackHeader onBack={onBack} action={<TextButton label="Edit" />} />
+      <BackHeader onBack={onBack} action={<TextButton label="Edit" onPress={onEdit} />} />
 
       <View style={{ gap: spacing[3], paddingTop: spacing[2] }}>
         <Text variant="heading1" accessibilityRole="header">

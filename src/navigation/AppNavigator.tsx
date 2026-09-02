@@ -17,6 +17,10 @@ import { OpportunitiesScreen } from '../screens/OpportunitiesScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { SearchResultsScreen } from '../screens/SearchResultsScreen';
 import { WelcomeScreen } from '../screens/WelcomeScreen';
+import { EnquiryFlowScreen } from '../screens/EnquiryFlowScreen';
+import { BusinessDocumentsScreen, BusinessProfileEditorScreen, SavedBusinessesScreen, TeamScreen } from '../screens/BusinessManagementScreens';
+import { ApplicationDetailScreen, ApplyFlowScreen, CandidateDocumentsScreen, CandidateProfileEditorScreen, JobDetailScreen, SavedJobsScreen } from '../screens/JobFlowScreens';
+import { AccountPrivacyScreen, ConversationDetailsScreen, NotificationPreferencesScreen, SavedSearchesScreen, SettingsHubScreen, SignInScreen, StateGalleryScreen } from '../screens/SharedScreens';
 
 /**
  * A deliberately small navigator. The prototype covers the three V1 journeys
@@ -33,7 +37,27 @@ type Route =
   | { name: 'business'; id: string }
   | { name: 'enquiry'; id: string }
   | { name: 'opportunities' }
-  | { name: 'conversation'; id: string };
+  | { name: 'conversation'; id: string }
+  | { name: 'sign-in' }
+  | { name: 'enquiry-compose'; mode: 'create' | 'edit' }
+  | { name: 'saved-businesses' }
+  | { name: 'business-profile-edit' }
+  | { name: 'business-profile-preview' }
+  | { name: 'business-documents' }
+  | { name: 'team' }
+  | { name: 'job'; id: string }
+  | { name: 'apply'; id: string }
+  | { name: 'saved-jobs' }
+  | { name: 'application' }
+  | { name: 'candidate-profile-edit' }
+  | { name: 'candidate-profile-preview' }
+  | { name: 'candidate-documents' }
+  | { name: 'settings' }
+  | { name: 'saved-searches' }
+  | { name: 'notifications' }
+  | { name: 'account' }
+  | { name: 'conversation-details'; member: string }
+  | { name: 'states' };
 
 export function AppNavigator() {
   const insets = useSafeAreaInsets();
@@ -65,8 +89,13 @@ export function AppNavigator() {
           reset({ name: nextRole === 'business' ? 'business-onboarding' : 'job-seeker-onboarding' });
         }}
         onExplore={() => reset({ name: 'tabs' })}
+        onSignIn={() => push({ name: 'sign-in' })}
       />
     );
+  }
+
+  if (route.name === 'sign-in') {
+    return <SignInScreen onBack={pop} onContinue={(nextRole) => { setRole(nextRole); setTab('discover'); reset({ name: 'tabs' }); }} />;
   }
 
   if (route.name === 'business-onboarding') {
@@ -132,12 +161,58 @@ export function AppNavigator() {
             enquiryId={route.id}
             onBack={pop}
             onOpenBusiness={(id) => push({ name: 'business', id })}
+            onEdit={() => push({ name: 'enquiry-compose', mode: 'edit' })}
           />
         );
       case 'opportunities':
         return <OpportunitiesScreen role={role} onBack={pop} />;
       case 'conversation':
-          return <ConversationScreen role={role} conversationId={route.id} onBack={pop} onTrustAction={runTrustAction} />;
+          return <ConversationScreen role={role} conversationId={route.id} onBack={pop} onTrustAction={runTrustAction} onDetails={(member) => push({ name: 'conversation-details', member })} />;
+      case 'conversation-details':
+        return <ConversationDetailsScreen name={route.member} onBack={pop} />;
+      case 'enquiry-compose':
+        return <EnquiryFlowScreen mode={route.mode} onBack={pop} onDone={() => { setTab('enquiries'); reset({ name: 'tabs' }); }} />;
+      case 'saved-businesses':
+        return <SavedBusinessesScreen onBack={pop} onOpenBusiness={(id) => push({ name: 'business', id })} />;
+      case 'business-profile-edit':
+        return <BusinessProfileEditorScreen profile={businessProfile} onBack={pop} onPreview={() => push({ name: 'business-profile-preview' })} onSave={(profile) => { setBusinessProfile(profile); pop(); }} />;
+      case 'business-profile-preview':
+        return <BusinessProfileEditorScreen profile={businessProfile} previewOnly onBack={pop} />;
+      case 'business-documents':
+        return <BusinessDocumentsScreen onBack={pop} />;
+      case 'team':
+        return <TeamScreen onBack={pop} />;
+      case 'job':
+        return <JobDetailScreen jobId={route.id} onBack={pop} onApply={(id) => push({ name: 'apply', id })} />;
+      case 'apply':
+        return <ApplyFlowScreen jobId={route.id} onBack={pop} onDone={() => push({ name: 'application' })} />;
+      case 'saved-jobs':
+        return <SavedJobsScreen onBack={pop} onOpenJob={(id) => push({ name: 'job', id })} />;
+      case 'application':
+        return <ApplicationDetailScreen onBack={pop} onOpenConversation={() => push({ name: 'conversation', id: 'job-abc-leather' })} />;
+      case 'candidate-profile-edit':
+        return <CandidateProfileEditorScreen profile={jobSeekerProfile} onBack={pop} onPreview={() => push({ name: 'candidate-profile-preview' })} onSave={(profile) => { setJobSeekerProfile(profile); pop(); }} />;
+      case 'candidate-profile-preview':
+        return <CandidateProfileEditorScreen profile={jobSeekerProfile} previewOnly onBack={pop} />;
+      case 'candidate-documents':
+        return <CandidateDocumentsScreen onBack={pop} />;
+      case 'settings':
+        return <SettingsHubScreen role={role} onBack={pop} onOpen={(key) => {
+          if (key === 'saved') push({ name: role === 'business' ? 'saved-businesses' : 'saved-jobs' });
+          else if (key === 'documents') push({ name: role === 'business' ? 'business-documents' : 'candidate-documents' });
+          else if (key === 'team') push({ name: 'team' });
+          else if (key === 'searches') push({ name: 'saved-searches' });
+          else if (key === 'notifications') push({ name: 'notifications' });
+          else push({ name: 'account' });
+        }} />;
+      case 'saved-searches':
+        return <SavedSearchesScreen role={role} onBack={pop} />;
+      case 'notifications':
+        return <NotificationPreferencesScreen onBack={pop} />;
+      case 'account':
+        return <AccountPrivacyScreen onBack={pop} onSignOut={() => reset({ name: 'welcome' })} />;
+      case 'states':
+        return <StateGalleryScreen onBack={pop} />;
       case 'tabs':
       default:
         return (
@@ -151,6 +226,12 @@ export function AppNavigator() {
             onOpenEnquiry={(id) => push({ name: 'enquiry', id })}
             onOpenOpportunities={() => push({ name: 'opportunities' })}
             onOpenConversation={(id) => push({ name: 'conversation', id })}
+            onCreateEnquiry={() => runTrustAction(() => push({ name: 'enquiry-compose', mode: 'create' }))}
+            onOpenJob={(id) => push({ name: 'job', id })}
+            onOpenApplication={() => push({ name: 'application' })}
+            onEditProfile={() => push({ name: role === 'business' ? 'business-profile-edit' : 'candidate-profile-edit' })}
+            onPreviewProfile={() => push({ name: role === 'business' ? 'business-profile-preview' : 'candidate-profile-preview' })}
+            onManage={() => push({ name: 'settings' })}
             businessProfile={businessProfile}
             jobSeekerProfile={jobSeekerProfile}
             jobSwipeCreditsUsed={jobSwipeCreditsUsed}
@@ -221,6 +302,12 @@ function TabScreen({
   onOpenEnquiry,
   onOpenOpportunities,
   onOpenConversation,
+  onCreateEnquiry,
+  onOpenJob,
+  onOpenApplication,
+  onEditProfile,
+  onPreviewProfile,
+  onManage,
   businessProfile,
   jobSeekerProfile,
   jobSwipeCreditsUsed,
@@ -237,6 +324,12 @@ function TabScreen({
   onOpenEnquiry: (id: string) => void;
   onOpenOpportunities: () => void;
   onOpenConversation: (id: string) => void;
+  onCreateEnquiry: () => void;
+  onOpenJob: (id: string) => void;
+  onOpenApplication: () => void;
+  onEditProfile: () => void;
+  onPreviewProfile: () => void;
+  onManage: () => void;
   businessProfile: BusinessProfileData | null;
   jobSeekerProfile: JobSeekerProfileData | null;
   jobSwipeCreditsUsed: number;
@@ -246,11 +339,11 @@ function TabScreen({
 }) {
   switch (tab) {
     case 'enquiries':
-      return <EnquiriesScreen role={role} onOpenEnquiry={onOpenEnquiry} onCreateEnquiry={() => onTrustAction(() => undefined)} />;
+      return <EnquiriesScreen role={role} onOpenEnquiry={onOpenEnquiry} onCreateEnquiry={onCreateEnquiry} onOpenJob={onOpenJob} onOpenApplication={onOpenApplication} />;
     case 'inbox':
       return <InboxScreen role={role} onOpenConversation={onOpenConversation} />;
     case 'profile':
-      return <ProfileScreen role={role} businessProfile={businessProfile} jobSeekerProfile={jobSeekerProfile} onVerifyBusiness={onVerifyBusiness} />;
+      return <ProfileScreen role={role} businessProfile={businessProfile} jobSeekerProfile={jobSeekerProfile} onVerifyBusiness={onVerifyBusiness} onEditProfile={onEditProfile} onPreviewProfile={onPreviewProfile} onManage={onManage} />;
     case 'discover':
     default:
       return (
@@ -260,6 +353,7 @@ function TabScreen({
           jobSeekerProfile={jobSeekerProfile}
           jobSwipeCreditsUsed={jobSwipeCreditsUsed}
           onJobSwipe={onJobSwipe}
+          onOpenJob={onOpenJob}
           onQueryChange={onQueryChange}
           onSearch={onSearch}
           onOpenBusiness={onOpenBusiness}

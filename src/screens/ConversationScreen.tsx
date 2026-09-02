@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, TextInput, View } from 'react-native';
-import { BackHeader, Divider, Icon, IconButton, Screen, Text, TrustBadge } from '../components';
+import { KeyboardAvoidingView, Modal, Platform, ScrollView, TextInput, View } from 'react-native';
+import { ActionRow, BackHeader, Button, Divider, Icon, IconButton, Screen, Text, TrustBadge } from '../components';
 import { conversations, jobSeekerConversations, type UserRole } from '../data/mock';
 import { colors, radius, size, spacing, typography } from '../theme';
 
@@ -13,24 +13,29 @@ export function ConversationScreen({
   conversationId,
   onBack,
   onTrustAction,
+  onDetails,
 }: {
   role: UserRole;
   conversationId: string;
   onBack: () => void;
   onTrustAction?: (action: () => void) => void;
+  onDetails?: (name: string) => void;
 }) {
   const inbox = role === 'job-seeker' ? jobSeekerConversations : conversations;
   const conversation = inbox.find((item) => item.id === conversationId) ?? inbox[0];
   const [draft, setDraft] = useState('');
   const [messages, setMessages] = useState(conversation.messages);
+  const [attachmentOpen, setAttachmentOpen] = useState(false);
+  const [attachment, setAttachment] = useState('');
 
   const commitSend = () => {
-    if (!draft.trim()) return;
+    if (!draft.trim() && !attachment) return;
     setMessages((current) => [
       ...current,
-      { id: String(current.length + 1), from: 'me', body: draft.trim(), time: 'Now' },
+      { id: String(current.length + 1), from: 'me', body: attachment ? `Attachment: ${attachment}${draft.trim() ? `\n${draft.trim()}` : ''}` : draft.trim(), time: 'Now' },
     ]);
     setDraft('');
+    setAttachment('');
   };
   const send = () => onTrustAction ? onTrustAction(commitSend) : commitSend();
 
@@ -39,7 +44,7 @@ export function ConversationScreen({
       <BackHeader
         title={conversation.business}
         onBack={onBack}
-        action={<IconButton label="More options" icon={<Icon name="more" />} />}
+        action={<IconButton label="More options" onPress={() => onDetails?.(conversation.business)} icon={<Icon name="more" />} />}
       />
       <View style={{ paddingBottom: spacing[3] }}>
         <TrustBadge signal="verified" detail="Active now" />
@@ -99,8 +104,9 @@ export function ConversationScreen({
 
         <Divider />
 
+        {attachment ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2], paddingTop: spacing[2] }}><Icon name="document" size={size.iconSm}/><Text variant="bodySmall" style={{ flex: 1 }}>{attachment} · Ready to send</Text><Button label="Remove" variant="tertiary" fullWidth={false} onPress={() => setAttachment('')} /></View> : null}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2], paddingVertical: spacing[3] }}>
-          <IconButton label="Add attachment" icon={<Icon name="plus" />} />
+          <IconButton label="Add attachment" onPress={() => setAttachmentOpen(true)} icon={<Icon name="plus" />} />
           <TextInput
             accessibilityLabel="Message"
             value={draft}
@@ -129,6 +135,18 @@ export function ConversationScreen({
           />
         </View>
       </KeyboardAvoidingView>
+      <Modal transparent visible={attachmentOpen} animationType="slide" onRequestClose={() => setAttachmentOpen(false)}>
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.72)' }}>
+          <View style={{ backgroundColor: colors.bg.raised, borderTopLeftRadius: radius.sheet, borderTopRightRadius: radius.sheet, padding: spacing[6], paddingBottom: spacing[8] }}>
+            <Text variant="heading2">Add an attachment</Text>
+            <Text variant="body" tone="secondary" style={{ marginTop: spacing[2], marginBottom: spacing[4] }}>Choose a useful file to support this conversation.</Text>
+            <ActionRow label="Choose a document" detail="PDF or spreadsheet · up to 10 MB" icon="document" onPress={() => { setAttachment('rate-card.pdf'); setAttachmentOpen(false); }} />
+            <Divider />
+            <ActionRow label="Choose a photo" detail="JPG or PNG · up to 10 MB" icon="camera" onPress={() => { setAttachment('sample-finish.jpg'); setAttachmentOpen(false); }} />
+            <Button label="Cancel" variant="tertiary" onPress={() => setAttachmentOpen(false)} />
+          </View>
+        </View>
+      </Modal>
     </Screen>
   );
 }

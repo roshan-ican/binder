@@ -24,10 +24,14 @@ export function EnquiriesScreen({
   role,
   onOpenEnquiry,
   onCreateEnquiry,
+  onOpenJob,
+  onOpenApplication,
 }: {
   role: UserRole;
   onOpenEnquiry: (id: string) => void;
   onCreateEnquiry?: () => void;
+  onOpenJob?: (id: string) => void;
+  onOpenApplication?: () => void;
 }) {
   const [tab, setTab] = useState<StatusTab>('active');
   const list = myEnquiries.filter((enquiry) => enquiry.status === tab);
@@ -54,7 +58,7 @@ export function EnquiriesScreen({
         <View style={{ marginTop: rhythm.cardToCard, gap: spacing[3] }}>
           {(tab === 'active' ? jobOpportunities.slice(0, 1) : tab === 'draft' ? jobOpportunities.slice(1, 2) : []).map(
             (job) => (
-              <Card key={job.id} accessibilityLabel={`${job.title} at ${job.company}`}>
+              <Card key={job.id} onPress={() => tab === 'active' ? onOpenApplication?.() : onOpenJob?.(job.id)} accessibilityLabel={`${job.title} at ${job.company}`}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: spacing[3] }}>
                   <View style={{ flex: 1, gap: spacing[1] }}>
                     <Text variant="heading3">{job.title}</Text>

@@ -20,11 +20,13 @@ export function JobSwipeDeck({
   creditsUsed,
   creditLimit = 10,
   onDecision,
+  onOpenJob,
 }: {
   jobs: JobOpportunity[];
   creditsUsed: number;
   creditLimit?: number;
   onDecision: (decision: Decision, job: JobOpportunity) => void;
+  onOpenJob?: (job: JobOpportunity) => void;
 }) {
   const [cardIndex, setCardIndex] = useState(0);
   const [premiumOpen, setPremiumOpen] = useState(false);
@@ -130,6 +132,7 @@ export function JobSwipeDeck({
           <JobSwipeCard
             job={currentJob}
             compact={compact}
+            onOpen={() => onOpenJob?.(currentJob)}
             actions={
               <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: spacing[8] }}>
                 <DecisionButton kind="pass" onPress={() => commit('pass')} />
@@ -151,7 +154,7 @@ export function JobSwipeDeck({
   );
 }
 
-function JobSwipeCard({ job, compact, actions }: { job: JobOpportunity; compact: boolean; actions?: React.ReactNode }) {
+function JobSwipeCard({ job, compact, actions, onOpen }: { job: JobOpportunity; compact: boolean; actions?: React.ReactNode; onOpen?: () => void }) {
   return (
     <View style={{ flex: 1, borderRadius: radius.lg, backgroundColor: colors.bg.raised, borderWidth: size.hairline, borderColor: colors.border.strong, padding: spacing[5], overflow: 'hidden' }}>
       <View style={{ gap: spacing[2] }}>
@@ -186,6 +189,7 @@ function JobSwipeCard({ job, compact, actions }: { job: JobOpportunity; compact:
       </View> : null}
 
       <View style={{ marginTop: 'auto', gap: spacing[3], paddingTop: spacing[3] }}>
+        {onOpen ? <Button label="View full job" variant="secondary" onPress={onOpen} /> : null}
         {actions}
       <Text variant="bodySmall" tone="tertiary" style={{ textAlign: 'center' }}>
         Swipe left to pass · Swipe right if interested

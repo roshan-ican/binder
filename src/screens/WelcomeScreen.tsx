@@ -7,9 +7,11 @@ import { colors, spacing } from "../theme";
 export function WelcomeScreen({
   onSelectRole,
   onExplore,
+  onSignIn,
 }: {
   onSelectRole: (role: UserRole) => void;
   onExplore: () => void;
+  onSignIn?: () => void;
 }) {
   return (
     <Screen density="hero" scroll={false}>
@@ -36,6 +38,7 @@ export function WelcomeScreen({
               label="I am a job seeker"
               onPress={() => onSelectRole("job-seeker")}
             />
+            <TextButton label="Already have an account? Sign in" onPress={onSignIn} tone="chrome" />
             {/* <View style={{ alignItems: 'center', paddingTop: spacing[2] }}>
               <TextButton label="Look around first" onPress={onExplore} tone="secondary" />
             </View> */}

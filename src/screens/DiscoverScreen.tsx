@@ -73,6 +73,7 @@ export function DiscoverScreen({
   jobSeekerProfile,
   jobSwipeCreditsUsed = 0,
   onJobSwipe,
+  onOpenJob,
   onQueryChange,
   onSearch,
   onOpenBusiness,
@@ -84,6 +85,7 @@ export function DiscoverScreen({
   jobSeekerProfile?: JobSeekerProfileData | null;
   jobSwipeCreditsUsed?: number;
   onJobSwipe?: () => void;
+  onOpenJob?: (id: string) => void;
   onQueryChange: (value: string) => void;
   onSearch: () => void;
   onOpenBusiness: (id: string) => void;
@@ -139,6 +141,7 @@ export function DiscoverScreen({
           jobs={rankJobs(jobOpportunities, jobSeekerProfile)}
           creditsUsed={jobSwipeCreditsUsed}
           onDecision={() => onJobSwipe?.()}
+          onOpenJob={(job) => onOpenJob?.(job.id)}
         />
       </View>
     );

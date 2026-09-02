@@ -22,11 +22,17 @@ export function ProfileScreen({
   businessProfile,
   jobSeekerProfile,
   onVerifyBusiness,
+  onEditProfile,
+  onPreviewProfile,
+  onManage,
 }: {
   role: UserRole;
   businessProfile?: BusinessProfileData | null;
   jobSeekerProfile?: JobSeekerProfileData | null;
   onVerifyBusiness?: () => void;
+  onEditProfile?: () => void;
+  onPreviewProfile?: () => void;
+  onManage?: () => void;
 }) {
   const isJobSeeker = role === 'job-seeker';
   const profileName = isJobSeeker ? (jobSeekerProfile?.fullName ?? candidate.person) : (businessProfile?.businessName ?? me.business);
@@ -57,7 +63,7 @@ export function ProfileScreen({
           {!isJobSeeker && businessProfile ? (
             <Text variant="bodySmall" tone="tertiary">Managed by {businessProfile.contactName}</Text>
           ) : null}
-          <TextButton label={isJobSeeker ? 'View candidate profile' : 'View public profile'} />
+          <TextButton label={isJobSeeker ? 'View candidate profile' : 'View public profile'} onPress={onPreviewProfile} />
         </View>
       </View>
 
@@ -85,7 +91,7 @@ export function ProfileScreen({
       ) : null}
 
       <View style={{ marginTop: rhythm.sectionToSection, gap: spacing[3] }}>
-        <SectionHeader title={offerTitle} action="Edit" />
+        <SectionHeader title={offerTitle} action="Edit" onAction={onEditProfile} />
         <View style={{ flexDirection: 'row', gap: spacing[2], flexWrap: 'wrap' }}>
           {offers.map((offer) => (
             <Chip key={offer} label={offer} />
@@ -94,7 +100,7 @@ export function ProfileScreen({
       </View>
 
       <View style={{ marginTop: rhythm.sectionToSection, gap: spacing[3] }}>
-        <SectionHeader title={needTitle} action="Edit" />
+        <SectionHeader title={needTitle} action="Edit" onAction={onEditProfile} />
         <View style={{ flexDirection: 'row', gap: spacing[2], flexWrap: 'wrap' }}>
           {needs.map((need) => (
             <Chip key={need} label={need} />
@@ -118,10 +124,10 @@ export function ProfileScreen({
 
       <View style={{ marginTop: spacing[4] }}>
         {[
-          { label: 'Saved searches', onPress: undefined },
-          { label: 'Team', onPress: undefined },
-          { label: 'Notification preferences', onPress: undefined },
-          { label: 'Account', onPress: undefined },
+          { label: 'Saved searches', onPress: onManage },
+          { label: 'Team', onPress: onManage },
+          { label: 'Notification preferences', onPress: onManage },
+          { label: 'Account', onPress: onManage },
         ].map((row) => (
           <View key={row.label}>
             <SettingRow label={row.label} onPress={row.onPress} />
