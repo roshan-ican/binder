@@ -25,7 +25,7 @@ export function BrowseSlider<T extends string>({
       accessibilityRole="tablist"
       accessibilityLabel={accessibilityLabel}
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={{ gap: spacing[3], paddingRight: spacing[2] }}
+      contentContainerStyle={{ gap: spacing[2], paddingHorizontal: spacing[1], paddingVertical: spacing[1] }}
     >
       {items.map((item) => {
         const selected = item.key === active;
@@ -39,9 +39,9 @@ export function BrowseSlider<T extends string>({
             onPress={() => onChange(item.key)}
             pressedScale={0.98}
             style={{
-              minWidth: 92,
-              minHeight: size.controlSm,
-              paddingHorizontal: spacing[2],
+              minWidth: 104,
+              minHeight: size.tap,
+              paddingHorizontal: spacing[3],
               alignItems: 'center',
               justifyContent: 'center',
               position: 'relative',
@@ -53,7 +53,7 @@ export function BrowseSlider<T extends string>({
             <View
               style={{
                 position: 'absolute',
-                bottom: 2,
+                bottom: spacing[1],
                 width: selected ? 52 : 0,
                 height: 3,
                 borderRadius: radius.full,

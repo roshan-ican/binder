@@ -1,6 +1,6 @@
 import {
-  ArrowLeft, ArrowRight, Bell, Bookmark, Building2, Camera, Check, ChevronRight, FileText,
-  Filter, Heart, MapPin, MessageCircle, MoreHorizontal, Package, Plus, Search, Settings,
+  ArrowLeft, ArrowRight, BadgeCheck, Bell, Bookmark, Building2, Camera, Check, ChevronRight, FileText,
+  Filter, MapPin, MessageCircle, MoreHorizontal, Package, Plus, Search, Settings,
   ShieldCheck, SlidersHorizontal, Star, Truck, Upload, Users, X, Factory,
   type LucideIcon,
 } from 'lucide-react-native';
@@ -15,7 +15,7 @@ export const icons = {
   chevronRight: ChevronRight, filter: Filter, sliders: SlidersHorizontal,
   mapPin: MapPin, building: Building2, factory: Factory, package: Package,
   truck: Truck, users: Users, message: MessageCircle, bell: Bell,
-  bookmark: Bookmark, heart: Heart, close: X, check: Check,
+  bookmark: Bookmark, close: X, check: Check, badgeCheck: BadgeCheck,
   shield: ShieldCheck, document: FileText, star: Star, more: MoreHorizontal,
   settings: Settings, camera: Camera, upload: Upload,
 } satisfies Record<string, LucideIcon>;

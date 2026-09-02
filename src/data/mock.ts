@@ -48,6 +48,7 @@ export type BusinessProfileData = {
   businessName: string;
   contactName: string;
   industry: string;
+  industries: string[];
   city: string;
   offers: string[];
   needs: string[];
@@ -91,6 +92,7 @@ export const me = {
   business: 'Roshan Clothing',
   person: 'Roshan',
   industry: 'Fashion & Apparel',
+  industries: ['Fashion & Apparel', 'Textiles'],
   city: 'Kanpur',
   region: 'Uttar Pradesh, India',
   offers: ['Manufacturer', 'Distributor'],

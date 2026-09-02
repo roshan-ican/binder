@@ -7,7 +7,7 @@ import { colors, radius, spacing } from '../theme';
 
 const TEST_GSTIN = '27AAPFU0939F1ZV';
 const testRegistration = {
-  businessName: 'Binder Test Industries', industry: 'Manufacturing & Distribution',
+  businessName: 'Binder Test Industries', industry: 'Manufacturing & Distribution', industries: ['Manufacturing & Distribution'],
   city: 'Mumbai, Maharashtra', offers: ['Manufacturer', 'Distributor'], needs: ['Packaging', 'Logistics'],
 };
 

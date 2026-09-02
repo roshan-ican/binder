@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomTabs, BusinessTrustGate, type BusinessMatchItem, type TabKey } from '../components';
 import type { BusinessProfileData, JobSeekerProfileData, UserRole } from '../data/mock';
@@ -60,9 +61,16 @@ type Route =
   | { name: 'conversation-details'; member: string }
   | { name: 'states' };
 
+const sessionStorageKey = 'binder.session.v1';
+
+type StoredSession = {
+  role: UserRole;
+};
+
 export function AppNavigator() {
   const insets = useSafeAreaInsets();
   const [stack, setStack] = useState<Route[]>([{ name: 'welcome' }]);
+  const [sessionReady, setSessionReady] = useState(false);
   const [tab, setTab] = useState<TabKey>('match');
   const [query, setQuery] = useState('');
   const [role, setRole] = useState<UserRole>('business');
@@ -73,15 +81,45 @@ export function AppNavigator() {
   const [trustGateOpen, setTrustGateOpen] = useState(false);
   const pendingTrustAction = useRef<null | (() => void)>(null);
 
+  useEffect(() => {
+    const restoreSession = async () => {
+      try {
+        const stored = await AsyncStorage.getItem(sessionStorageKey);
+        if (!stored) return;
+        const session = JSON.parse(stored) as StoredSession;
+        if (session.role === 'business' || session.role === 'job-seeker') {
+          setRole(session.role);
+          setStack([{ name: 'tabs' }]);
+        }
+      } catch {
+        // A malformed or unavailable local session should never block entry.
+      } finally {
+        setSessionReady(true);
+      }
+    };
+    void restoreSession();
+  }, []);
+
   const route = stack[stack.length - 1];
   const push = (next: Route) => setStack((current) => [...current, next]);
   const pop = () => setStack((current) => (current.length > 1 ? current.slice(0, -1) : current));
   const reset = (next: Route) => setStack([next]);
+  const persistSession = (nextRole: UserRole) => {
+    setRole(nextRole);
+    void AsyncStorage.setItem(sessionStorageKey, JSON.stringify({ role: nextRole } satisfies StoredSession));
+  };
+  const clearSession = () => {
+    void AsyncStorage.removeItem(sessionStorageKey);
+  };
   const runTrustAction = (action: () => void) => {
     if (role !== 'business' || businessProfile?.verificationStatus === 'verified') return action();
     pendingTrustAction.current = action;
     setTrustGateOpen(true);
   };
+
+  if (!sessionReady) {
+    return <View style={{ flex: 1, backgroundColor: colors.bg.primary }} />;
+  }
 
   if (route.name === 'welcome') {
     return (
@@ -97,7 +135,7 @@ export function AppNavigator() {
   }
 
   if (route.name === 'sign-in') {
-    return <SignInScreen onBack={pop} onContinue={(nextRole) => { setRole(nextRole); setTab('match'); reset({ name: 'tabs' }); }} />;
+    return <SignInScreen onBack={pop} onContinue={(nextRole) => { persistSession(nextRole); setTab('match'); reset({ name: 'tabs' }); }} />;
   }
 
   if (route.name === 'business-onboarding') {
@@ -106,7 +144,7 @@ export function AppNavigator() {
 
   if (route.name === 'business-verification' && businessProfile) {
     const finish = () => {
-      if (route.source === 'onboarding') { setTab('match'); reset({ name: 'tabs' }); return; }
+      if (route.source === 'onboarding') { persistSession(role); setTab('match'); reset({ name: 'tabs' }); return; }
       pop();
       const action = pendingTrustAction.current;
       pendingTrustAction.current = null;
@@ -130,6 +168,7 @@ export function AppNavigator() {
       <JobSeekerOnboardingScreen
         onComplete={setJobSeekerProfile}
         onExplore={() => {
+          persistSession('job-seeker');
           setTab('match');
           reset({ name: 'tabs' });
         }}
@@ -212,7 +251,7 @@ export function AppNavigator() {
       case 'notifications':
         return <NotificationPreferencesScreen onBack={pop} />;
       case 'account':
-        return <AccountPrivacyScreen onBack={pop} onSignOut={() => reset({ name: 'welcome' })} />;
+        return <AccountPrivacyScreen onBack={pop} onSignOut={() => { clearSession(); reset({ name: 'welcome' }); }} />;
       case 'states':
         return <StateGalleryScreen onBack={pop} />;
       case 'tabs':

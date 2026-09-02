@@ -234,7 +234,7 @@ function DecisionButton({
         elevation: 4,
       }}
     >
-      <Icon name={interested ? 'heart' : 'close'} size={30} color={color} />
+      <Icon name={interested ? 'check' : 'close'} size={30} color={color} />
     </AnimatedPressable>
   );
 }

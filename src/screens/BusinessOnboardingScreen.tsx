@@ -1,20 +1,21 @@
 import { View } from 'react-native';
 import { Controller, useForm } from 'react-hook-form';
 import { Button, Chip, Input, Screen, ScreenHeading, Text, TrustBadge } from '../components';
+import { businessIndustries } from '../data/businessTaxonomy';
 import type { BusinessProfileData } from '../data/mock';
 import { spacing } from '../theme';
 
 type FormValues = {
   businessName: string;
   contactName: string;
-  industry: string;
+  industries: string[];
   city: string;
   offers: string[];
   needs: string;
 };
 
 const defaults: FormValues = {
-  businessName: '', contactName: '', industry: '', city: '', offers: [], needs: '',
+  businessName: '', contactName: '', industries: [], city: '', offers: [], needs: '',
 };
 
 const offerOptions = ['Manufacturer', 'Supplier', 'Distributor', 'Wholesaler', 'Retailer', 'Service provider'] as const;
@@ -25,7 +26,8 @@ export function BusinessOnboardingScreen({ onComplete }: { onComplete: (profile:
   const save = (values: FormValues) => onComplete({
     businessName: values.businessName.trim(),
     contactName: values.contactName.trim(),
-    industry: values.industry.trim(),
+    industry: values.industries[0],
+    industries: values.industries,
     city: values.city.trim(),
     offers: values.offers,
     needs: values.needs.split(',').map((item) => item.trim()).filter(Boolean),
@@ -39,7 +41,31 @@ export function BusinessOnboardingScreen({ onComplete }: { onComplete: (profile:
       <View style={{ gap: spacing[5], marginTop: spacing[8] }}>
         <FormInput control={control} name="businessName" label="Business name" placeholder="Roshan Clothing" />
         <FormInput control={control} name="contactName" label="Your name" placeholder="Roshan" />
-        <FormInput control={control} name="industry" label="Industry" placeholder="Fashion & Apparel" />
+        <Controller
+          control={control}
+          name="industries"
+          rules={{ validate: (value) => value.length > 0 || 'Select at least one industry.' }}
+          render={({ field: { value, onChange }, fieldState: { error } }) => (
+            <View style={{ gap: spacing[2] }}>
+              <Text variant="label" tone="secondary">Industries</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
+                {businessIndustries.map((industry) => (
+                  <Chip
+                    key={industry}
+                    label={industry}
+                    selected={value.includes(industry)}
+                    onPress={() => onChange(value.includes(industry)
+                      ? value.filter((item) => item !== industry)
+                      : [...value, industry])}
+                  />
+                ))}
+              </View>
+              <Text variant="bodySmall" tone={error ? 'danger' : 'tertiary'}>
+                {error?.message ?? 'Select all industries that apply.'}
+              </Text>
+            </View>
+          )}
+        />
         <FormInput control={control} name="city" label="City" placeholder="Kanpur" />
         <Controller
           control={control}
@@ -61,7 +87,7 @@ export function BusinessOnboardingScreen({ onComplete }: { onComplete: (profile:
   );
 }
 
-type TextFieldName = Exclude<keyof FormValues, 'offers'>;
+type TextFieldName = Exclude<keyof FormValues, 'offers' | 'industries'>;
 function FormInput({ control, name, label, placeholder, helper }: { control: ReturnType<typeof useForm<FormValues>>['control']; name: TextFieldName; label: string; placeholder: string; helper?: string }) {
   return <Controller control={control} name={name} rules={{ validate: (value) => value.trim().length > 0 || 'Please enter a value.' }} render={({ field: { value, onChange }, fieldState: { error } }) => <Input label={label} value={value} onChangeText={onChange} placeholder={placeholder} helper={helper} error={error?.message} />} />;
 }

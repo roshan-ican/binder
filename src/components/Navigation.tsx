@@ -9,7 +9,7 @@ import { Text } from './Text';
 export type TabKey = 'match' | 'discover' | 'enquiries' | 'inbox' | 'profile';
 
 const businessTabs: { key: TabKey; label: string; icon: IconName }[] = [
-  { key: 'match', label: 'Match', icon: 'heart' },
+  { key: 'match', label: 'Match', icon: 'check' },
   { key: 'discover', label: 'Discover', icon: 'search' },
   { key: 'enquiries', label: 'Enquiries', icon: 'document' },
   { key: 'inbox', label: 'Inbox', icon: 'message' },
@@ -17,7 +17,7 @@ const businessTabs: { key: TabKey; label: string; icon: IconName }[] = [
 ];
 
 const jobSeekerTabs: { key: TabKey; label: string; icon: IconName }[] = [
-  { key: 'match', label: 'Match', icon: 'heart' },
+  { key: 'match', label: 'Match', icon: 'check' },
   { key: 'discover', label: 'Jobs', icon: 'search' },
   { key: 'enquiries', label: 'Applied', icon: 'document' },
   { key: 'inbox', label: 'Inbox', icon: 'message' },
@@ -105,10 +105,11 @@ export function TopTabs<T extends string>({
         flexDirection: 'row',
         borderRadius: radius.full,
         borderWidth: size.hairline,
-        borderColor: '#BDB7B1',
-        backgroundColor: '#D6D1CB',
+        borderColor: colors.border.strong,
+        backgroundColor: colors.surface.inverse,
         overflow: 'hidden',
-        alignSelf: 'flex-start',
+        alignSelf: 'stretch',
+        width: '100%',
       }}
     >
       <ChromeSurface borderRadius={radius.full} intensity="soft" />
@@ -122,12 +123,12 @@ export function TopTabs<T extends string>({
             onPress={() => onChange(item.key)}
             pressedScale={0.97}
             style={{
-              minHeight: size.controlSm,
-              minWidth: 92,
-              paddingHorizontal: spacing[4],
+              minHeight: size.tap,
+              minWidth: 0,
+              paddingHorizontal: spacing[2],
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: isActive ? 'rgba(255,255,255,0.62)' : 'transparent',
+              backgroundColor: isActive ? colors.chrome[100] : 'transparent',
               borderRightWidth: item === items[items.length - 1] ? 0 : size.hairline,
               borderRightColor: 'rgba(35,33,31,0.18)',
               overflow: 'hidden',

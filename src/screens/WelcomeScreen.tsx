@@ -18,7 +18,14 @@ export function WelcomeScreen({
       <View
         style={{ flex: 1, justifyContent: "center", paddingBottom: spacing[8] }}
       >
-        <View style={{ width: "100%", maxWidth: 620, gap: spacing[12] }}>
+        <View
+          style={{
+            width: "100%",
+            maxWidth: 620,
+            alignSelf: "center",
+            gap: spacing[12],
+          }}
+        >
           <View style={{ gap: spacing[6] }}>
             <Text variant="micro" style={{ color: colors.chrome[200] }}>
               Binder

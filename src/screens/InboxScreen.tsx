@@ -49,7 +49,11 @@ export function InboxScreen({
               <Card
                 onPress={() => onOpenConversation(conversation.id)}
                 accessibilityLabel={`${conversation.business}. ${conversation.unread ? 'Unread. ' : ''}${conversation.preview}`}
-                style={{ borderWidth: 0, backgroundColor: 'transparent', paddingHorizontal: 0 }}
+                style={{
+                  borderWidth: 0,
+                  backgroundColor: 'transparent',
+                  paddingHorizontal: spacing[2],
+                }}
               >
                 <View style={{ flexDirection: 'row', gap: spacing[3], alignItems: 'center' }}>
                   <Logo name={conversation.business} size="sm" />
@@ -61,8 +65,8 @@ export function InboxScreen({
                       {conversation.preview}
                     </Text>
                   </View>
-                  <View style={{ alignItems: 'flex-end', gap: spacing[2] }}>
-                    <Text variant="bodySmall" tone="tertiary">
+                  <View style={{ minWidth: spacing[8], alignItems: 'flex-end', gap: spacing[2] }}>
+                    <Text variant="bodySmall" tone="tertiary" style={{ textAlign: 'right' }}>
                       {conversation.time}
                     </Text>
                     {/* A small chrome indicator, never a bright blue dot. */}

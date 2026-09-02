@@ -37,7 +37,7 @@ export function Screen({
         <ScrollView
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: spacing[10] }}
+          contentContainerStyle={{ paddingBottom: spacing[16] + insets.bottom }}
         >
           {content}
         </ScrollView>

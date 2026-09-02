@@ -12,8 +12,8 @@ export type TrustSignal = 'documents' | 'pending' | 'verified' | 'proven';
 const signals: Record<TrustSignal, { label: string; icon: IconName; color: string }> = {
   documents: { label: 'Documents provided', icon: 'document', color: colors.text.secondary },
   pending: { label: 'Verification pending', icon: 'document', color: colors.semantic.warning },
-  verified: { label: 'Verified', icon: 'shield', color: colors.semantic.success },
-  proven: { label: 'Proven', icon: 'star', color: colors.chrome[200] },
+  verified: { label: 'Binder verified', icon: 'badgeCheck', color: colors.chrome[200] },
+  proven: { label: 'Binder verified', icon: 'badgeCheck', color: colors.chrome[200] },
 };
 
 export function TrustBadge({ signal, detail }: { signal: TrustSignal; detail?: string }) {
