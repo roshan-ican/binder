@@ -1,6 +1,7 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { View } from 'react-native';
-import { BusinessMatchDeck, JobSwipeDeck, type BusinessMatchItem } from '../components';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BusinessMatchDeck, JobSwipeDeck, TopTabs, type BusinessMatchItem } from '../components';
 import {
   businesses,
   jobOpportunities,
@@ -10,8 +11,13 @@ import {
   type JobSeekerProfileData,
   type UserRole,
 } from '../data/mock';
-import { colors } from '../theme';
+import { colors, pagePadding, spacing } from '../theme';
+import { keywordMatches, normalise } from '../data/matching';
 import { rankJobs } from './DiscoverScreen';
+import { SwapScreen } from './SwapScreen';
+
+/** The business role has two ways to match: the deck, and swaps. */
+type MatchMode = 'matches' | 'swaps';
 
 export function MatchScreen({
   role,
@@ -24,6 +30,12 @@ export function MatchScreen({
   onOpenBusiness,
   onOpenEnquiry,
   onOpenJob,
+  swapOpen,
+  onSwapOpenChange,
+  onOpenSwapMatch,
+  onCreateSwapListing,
+  onEditSwapProfile,
+  onOpenConversation,
 }: {
   role: UserRole;
   businessProfile: BusinessProfileData | null;
@@ -35,7 +47,15 @@ export function MatchScreen({
   onOpenBusiness: (id: string) => void;
   onOpenEnquiry: (id: string) => void;
   onOpenJob: (id: string) => void;
+  swapOpen: boolean;
+  onSwapOpenChange: (value: boolean) => void;
+  onOpenSwapMatch: (id: string) => void;
+  onCreateSwapListing: () => void;
+  onEditSwapProfile: () => void;
+  onOpenConversation: (id: string) => void;
 }) {
+  const insets = useSafeAreaInsets();
+  const [mode, setMode] = useState<MatchMode>('matches');
   const businessItems = useMemo(() => buildBusinessMatchItems(businessProfile), [businessProfile]);
 
   if (role === 'job-seeker') {
@@ -52,16 +72,40 @@ export function MatchScreen({
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg.primary }}>
-      <BusinessMatchDeck
-        items={businessItems}
-        creditsUsed={businessSwipeCreditsUsed}
-        city={businessProfile?.city || me.city}
-        onDecision={onBusinessDecision}
-        onOpenItem={(item) =>
-          item.kind === 'business' ? onOpenBusiness(item.business.id) : onOpenEnquiry(item.enquiry.id)
-        }
-      />
+    <View style={{ flex: 1, backgroundColor: colors.bg.primary, paddingTop: insets.top }}>
+      <View style={{ paddingHorizontal: pagePadding.default, paddingTop: spacing[2] }}>
+        <TopTabs
+          items={[
+            { key: 'matches', label: 'Business matches' },
+            { key: 'swaps', label: 'Swaps' },
+          ]}
+          active={mode}
+          onChange={setMode}
+        />
+      </View>
+
+      {mode === 'matches' ? (
+        <BusinessMatchDeck
+          items={businessItems}
+          creditsUsed={businessSwipeCreditsUsed}
+          city={businessProfile?.city || me.city}
+          topInset={spacing[4]}
+          onDecision={onBusinessDecision}
+          onOpenItem={(item) =>
+            item.kind === 'business' ? onOpenBusiness(item.business.id) : onOpenEnquiry(item.enquiry.id)
+          }
+        />
+      ) : (
+        <SwapScreen
+          profile={businessProfile}
+          swapOpen={swapOpen}
+          onSwapOpenChange={onSwapOpenChange}
+          onOpenMatch={onOpenSwapMatch}
+          onCreateListing={onCreateSwapListing}
+          onEditSwapProfile={onEditSwapProfile}
+          onOpenConversation={onOpenConversation}
+        />
+      )}
     </View>
   );
 }
@@ -102,13 +146,4 @@ function buildBusinessMatchItems(profile: BusinessProfileData | null): BusinessM
     if (enquiry) result.push({ kind: 'enquiry', id: `enquiry:${enquiry.id}`, enquiry });
   }
   return result;
-}
-
-function keywordMatches(text: string, keywords: string[]) {
-  const normalisedText = normalise(text);
-  return keywords.filter((keyword) => keyword.length > 2 && normalisedText.includes(keyword)).length;
-}
-
-function normalise(value: string) {
-  return value.trim().toLowerCase();
 }

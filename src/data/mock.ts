@@ -510,6 +510,19 @@ export const conversations: Conversation[] = [
     ],
   },
   {
+    id: 'swap-lens-forty-two',
+    business: 'Lens Forty Two',
+    preview: 'Happy to shoot the winter line in exchange for jackets.',
+    time: '15m',
+    unread: true,
+    context: 'Swap · Photography ↔ Clothing',
+    messages: [
+      { id: '1', from: 'them', body: 'Happy to shoot the winter line in exchange for jackets.', time: '11:02' },
+      { id: '2', from: 'me', body: 'Works for us. Four jackets against a full product day?', time: '11:09' },
+      { id: '3', from: 'them', body: 'Make it five and I will include the retouching.', time: '11:14' },
+    ],
+  },
+  {
     id: 'meridian-pack',
     business: 'Meridian Packaging',
     preview: 'Sharing the box spec sheet.',
@@ -747,21 +760,5 @@ export const swapProposals: SwapProposal[] = [
     counterparties: 'Pulse Fitness Club',
     status: 'draft',
     updated: 'Not sent yet',
-  },
-];
-
-export const swapConversations: Conversation[] = [
-  {
-    id: 'swap-lens-forty-two',
-    business: 'Lens Forty Two',
-    preview: 'Happy to shoot the winter line in exchange for jackets.',
-    time: '15m',
-    unread: true,
-    context: 'Swap · Photography ↔ Clothing',
-    messages: [
-      { id: '1', from: 'them', body: 'Happy to shoot the winter line in exchange for jackets.', time: '11:02' },
-      { id: '2', from: 'me', body: 'Works for us. Four jackets against a full product day?', time: '11:09' },
-      { id: '3', from: 'them', body: 'Make it five and I will include the retouching.', time: '11:14' },
-    ],
   },
 ];

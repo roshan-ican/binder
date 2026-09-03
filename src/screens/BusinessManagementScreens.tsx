@@ -92,6 +92,10 @@ export function BusinessProfileEditorScreen({
   const [about, setAbout] = useState(
     "Apparel production partner for growing Indian labels, with in-house sampling and quality control.",
   );
+  // The open/closed switch lives on the Swap screen so there is one source of
+  // truth for it; the editor only owns the two lists Binder matches on.
+  const [swapWants, setSwapWants] = useState((profile?.swapWants ?? me.swapWants).join(", "));
+  const [swapOffers, setSwapOffers] = useState((profile?.swapOffers ?? me.swapOffers).join(", "));
   if (previewOnly)
     return (
       <Screen>
@@ -132,6 +136,11 @@ export function BusinessProfileEditorScreen({
             ))}
           </View>
         </View>
+        <View style={{ marginTop: rhythm.sectionToSection, gap: spacing[3] }}>
+          <SectionHeader title="Open to swaps" supporting="What this business wants, and what it can put on the table." />
+          <ChipList labels={splitList(swapWants)} empty="Nothing listed." />
+          <ChipList labels={splitList(swapOffers)} empty="Nothing listed." />
+        </View>
         <StatusNotice
           title="Preview mode"
           body="This is how other businesses see your profile."
@@ -150,6 +159,9 @@ export function BusinessProfileEditorScreen({
       needs: profile?.needs ?? me.needs,
       verificationStatus: profile?.verificationStatus ?? "unverified",
       gstin: profile?.gstin,
+      swapOpen: profile?.swapOpen ?? me.swapOpen,
+      swapWants: splitList(swapWants),
+      swapOffers: splitList(swapOffers),
     });
   return (
     <Screen footer={<Button label="Save profile" onPress={save} />}>
@@ -197,8 +209,51 @@ export function BusinessProfileEditorScreen({
             ))}
           </View>
         </View>
+        <View style={{ gap: spacing[3] }}>
+          <SectionHeader
+            title="Swap profile"
+            supporting="Binder matches these two lists against other businesses, including three-way chains."
+          />
+          <Input
+            label="What you need"
+            value={swapWants}
+            onChangeText={setSwapWants}
+            helper="Separate with commas — Photography, Packaging, Catering."
+          />
+          <Input
+            label="What you can offer"
+            value={swapOffers}
+            onChangeText={setSwapOffers}
+            helper="Products, services, exposure, space or distribution."
+          />
+          <ChipList labels={splitList(swapOffers)} empty="Nothing listed yet." />
+        </View>
       </View>
     </Screen>
+  );
+}
+
+function splitList(value: string) {
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function ChipList({ labels, empty }: { labels: string[]; empty: string }) {
+  if (!labels.length) {
+    return (
+      <Text variant="bodySmall" tone="tertiary">
+        {empty}
+      </Text>
+    );
+  }
+  return (
+    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing[2] }}>
+      {labels.map((label) => (
+        <Chip key={label} label={label} />
+      ))}
+    </View>
   );
 }
 

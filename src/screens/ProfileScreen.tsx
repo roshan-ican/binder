@@ -31,6 +31,7 @@ export function ProfileScreen({
   onEditProfile,
   onPreviewProfile,
   onManage,
+  swapOpen = false,
 }: {
   role: UserRole;
   businessProfile?: BusinessProfileData | null;
@@ -39,6 +40,8 @@ export function ProfileScreen({
   onEditProfile?: () => void;
   onPreviewProfile?: () => void;
   onManage?: () => void;
+  /** Owned by the navigator so the Swap screen and this screen never disagree. */
+  swapOpen?: boolean;
 }) {
   const isJobSeeker = role === "job-seeker";
   const profileName = isJobSeeker
@@ -172,6 +175,48 @@ export function ProfileScreen({
           ))}
         </View>
       </View>
+
+      {!isJobSeeker ? (
+        <View style={{ marginTop: rhythm.sectionToSection, gap: spacing[3] }}>
+          <SectionHeader
+            title="Swap"
+            action="Edit"
+            onAction={onEditProfile}
+            supporting={
+              swapOpen
+                ? "Other businesses can propose an exchange with you."
+                : "Swaps are switched off. Turn them on from the Swaps tab."
+            }
+          />
+          <View style={{ flexDirection: "row" }}>
+            <Chip
+              label={swapOpen ? "Open to swaps" : "Closed to swaps"}
+              icon={swapOpen ? "check" : "close"}
+              selected={swapOpen}
+            />
+          </View>
+          <Text variant="micro" tone="tertiary">
+            You need
+          </Text>
+          <View
+            style={{ flexDirection: "row", gap: spacing[2], flexWrap: "wrap" }}
+          >
+            {(businessProfile?.swapWants ?? me.swapWants).map((want) => (
+              <Chip key={want} label={want} />
+            ))}
+          </View>
+          <Text variant="micro" tone="tertiary" style={{ marginTop: spacing[2] }}>
+            You can offer
+          </Text>
+          <View
+            style={{ flexDirection: "row", gap: spacing[2], flexWrap: "wrap" }}
+          >
+            {(businessProfile?.swapOffers ?? me.swapOffers).map((offer) => (
+              <Chip key={offer} label={offer} />
+            ))}
+          </View>
+        </View>
+      ) : null}
 
       <View style={{ marginTop: rhythm.sectionToSection, gap: spacing[3] }}>
         <SectionHeader

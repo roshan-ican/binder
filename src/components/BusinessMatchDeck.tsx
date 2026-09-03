@@ -24,6 +24,7 @@ export function BusinessMatchDeck({
   creditsUsed,
   creditLimit = 10,
   city,
+  topInset,
   onDecision,
   onOpenItem,
 }: {
@@ -31,6 +32,8 @@ export function BusinessMatchDeck({
   creditsUsed: number;
   creditLimit?: number;
   city: string;
+  /** Set when the deck sits under a header that already owns the safe area. */
+  topInset?: number;
   onDecision: (decision: Decision, item: BusinessMatchItem) => void;
   onOpenItem: (item: BusinessMatchItem) => void;
 }) {
@@ -130,7 +133,7 @@ export function BusinessMatchDeck({
       style={{
         flex: 1,
         paddingHorizontal: spacing[4],
-        paddingTop: Math.max(insets.top, spacing[4]),
+        paddingTop: topInset ?? Math.max(insets.top, spacing[4]),
         gap: spacing[3],
       }}
     >

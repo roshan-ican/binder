@@ -3,7 +3,7 @@ import { Animated, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomTabs, BusinessTrustGate, type BusinessMatchItem, type TabKey } from '../components';
-import type { BusinessProfileData, JobSeekerProfileData, UserRole } from '../data/mock';
+import { me, type BusinessProfileData, type JobSeekerProfileData, type UserRole } from '../data/mock';
 import { colors, motion } from '../theme';
 import { BusinessProfileScreen } from '../screens/BusinessProfileScreen';
 import { BusinessVerificationScreen } from '../screens/BusinessVerificationScreen';
@@ -20,6 +20,8 @@ import { ProfileScreen } from '../screens/ProfileScreen';
 import { SearchResultsScreen } from '../screens/SearchResultsScreen';
 import { WelcomeScreen } from '../screens/WelcomeScreen';
 import { EnquiryFlowScreen } from '../screens/EnquiryFlowScreen';
+import { SwapFlowScreen } from '../screens/SwapFlowScreen';
+import { SwapMatchScreen } from '../screens/SwapMatchScreen';
 import { BusinessDocumentsScreen, BusinessProfileEditorScreen, SavedBusinessesScreen, TeamScreen } from '../screens/BusinessManagementScreens';
 import { ApplicationDetailScreen, ApplyFlowScreen, CandidateDocumentsScreen, CandidateProfileEditorScreen, JobDetailScreen, SavedJobsScreen } from '../screens/JobFlowScreens';
 import { AccountPrivacyScreen, ConversationDetailsScreen, NotificationPreferencesScreen, SavedSearchesScreen, SettingsHubScreen, SignInScreen, StateGalleryScreen } from '../screens/SharedScreens';
@@ -42,6 +44,8 @@ type Route =
   | { name: 'conversation'; id: string }
   | { name: 'sign-in' }
   | { name: 'enquiry-compose'; mode: 'create' | 'edit' }
+  | { name: 'swap-match'; id: string }
+  | { name: 'swap-compose'; mode: 'create' | 'edit' }
   | { name: 'saved-businesses' }
   | { name: 'business-profile-edit' }
   | { name: 'business-profile-preview' }
@@ -78,6 +82,7 @@ export function AppNavigator() {
   const [jobSeekerProfile, setJobSeekerProfile] = useState<JobSeekerProfileData | null>(null);
   const [jobSwipeCreditsUsed, setJobSwipeCreditsUsed] = useState(0);
   const [businessSwipeCreditsUsed, setBusinessSwipeCreditsUsed] = useState(0);
+  const [swapOpen, setSwapOpen] = useState(me.swapOpen);
   const [trustGateOpen, setTrustGateOpen] = useState(false);
   const pendingTrustAction = useRef<null | (() => void)>(null);
 
@@ -213,6 +218,18 @@ export function AppNavigator() {
         return <ConversationDetailsScreen name={route.member} onBack={pop} />;
       case 'enquiry-compose':
         return <EnquiryFlowScreen mode={route.mode} onBack={pop} onDone={() => { setTab('enquiries'); reset({ name: 'tabs' }); }} />;
+      case 'swap-match':
+        return (
+          <SwapMatchScreen
+            matchId={route.id}
+            profile={businessProfile}
+            onBack={pop}
+            onOpenBusiness={(id) => push({ name: 'business', id })}
+            onPropose={() => runTrustAction(() => push({ name: 'conversation', id: 'swap-lens-forty-two' }))}
+          />
+        );
+      case 'swap-compose':
+        return <SwapFlowScreen mode={route.mode} onBack={pop} onDone={() => { setTab('match'); reset({ name: 'tabs' }); }} />;
       case 'saved-businesses':
         return <SavedBusinessesScreen onBack={pop} onOpenBusiness={(id) => push({ name: 'business', id })} />;
       case 'business-profile-edit':
@@ -288,6 +305,10 @@ export function AppNavigator() {
             }}
             onTrustAction={runTrustAction}
             onVerifyBusiness={() => push({ name: 'business-verification', source: 'profile' })}
+            swapOpen={swapOpen}
+            onSwapOpenChange={setSwapOpen}
+            onOpenSwapMatch={(id) => push({ name: 'swap-match', id })}
+            onCreateSwapListing={() => runTrustAction(() => push({ name: 'swap-compose', mode: 'create' }))}
           />
         );
     }
@@ -366,6 +387,10 @@ function TabScreen({
   onBusinessDecision,
   onTrustAction,
   onVerifyBusiness,
+  swapOpen,
+  onSwapOpenChange,
+  onOpenSwapMatch,
+  onCreateSwapListing,
 }: {
   tab: TabKey;
   role: UserRole;
@@ -390,16 +415,20 @@ function TabScreen({
   onBusinessDecision: (decision: 'pass' | 'interested', item: BusinessMatchItem) => void;
   onTrustAction: (action: () => void) => void;
   onVerifyBusiness: () => void;
+  swapOpen: boolean;
+  onSwapOpenChange: (value: boolean) => void;
+  onOpenSwapMatch: (id: string) => void;
+  onCreateSwapListing: () => void;
 }) {
   switch (tab) {
     case 'match':
-      return <MatchScreen role={role} businessProfile={businessProfile} jobSeekerProfile={jobSeekerProfile} businessSwipeCreditsUsed={businessSwipeCreditsUsed} jobSwipeCreditsUsed={jobSwipeCreditsUsed} onBusinessDecision={onBusinessDecision} onJobSwipe={onJobSwipe} onOpenBusiness={onOpenBusiness} onOpenEnquiry={onOpenEnquiry} onOpenJob={onOpenJob} />;
+      return <MatchScreen role={role} businessProfile={businessProfile} jobSeekerProfile={jobSeekerProfile} businessSwipeCreditsUsed={businessSwipeCreditsUsed} jobSwipeCreditsUsed={jobSwipeCreditsUsed} onBusinessDecision={onBusinessDecision} onJobSwipe={onJobSwipe} onOpenBusiness={onOpenBusiness} onOpenEnquiry={onOpenEnquiry} onOpenJob={onOpenJob} swapOpen={swapOpen} onSwapOpenChange={onSwapOpenChange} onOpenSwapMatch={onOpenSwapMatch} onCreateSwapListing={onCreateSwapListing} onEditSwapProfile={onEditProfile} onOpenConversation={onOpenConversation} />;
     case 'enquiries':
       return <EnquiriesScreen role={role} onOpenEnquiry={onOpenEnquiry} onCreateEnquiry={onCreateEnquiry} onOpenJob={onOpenJob} onOpenApplication={onOpenApplication} />;
     case 'inbox':
       return <InboxScreen role={role} onOpenConversation={onOpenConversation} />;
     case 'profile':
-      return <ProfileScreen role={role} businessProfile={businessProfile} jobSeekerProfile={jobSeekerProfile} onVerifyBusiness={onVerifyBusiness} onEditProfile={onEditProfile} onPreviewProfile={onPreviewProfile} onManage={onManage} />;
+      return <ProfileScreen role={role} businessProfile={businessProfile} jobSeekerProfile={jobSeekerProfile} onVerifyBusiness={onVerifyBusiness} onEditProfile={onEditProfile} onPreviewProfile={onPreviewProfile} onManage={onManage} swapOpen={swapOpen} />;
     case 'discover':
     default:
       return (

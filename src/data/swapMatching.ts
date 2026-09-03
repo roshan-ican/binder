@@ -216,3 +216,52 @@ function unique(values: string[]) {
 function lower(value: string) {
   return value.charAt(0).toLowerCase() + value.slice(1);
 }
+
+/* -------------------------------------------------------------------------
+ * View models — screens render these, so the swap components stay free of
+ * lookup logic.
+ * ---------------------------------------------------------------------- */
+
+export type SwapLegView = { from: SwapParty; to: SwapParty; gives: string };
+
+export type SwapSummary = {
+  id: string;
+  kind: SwapMatch['kind'];
+  swapKind: SwapKind;
+  match: SwapMatch['match'];
+  /** What leaves your business, and what comes back to it. */
+  youGive: string;
+  youGet: string;
+  others: SwapParty[];
+  legs: SwapLegView[];
+  reasons: string[];
+};
+
+export function describeSwap(match: SwapMatch, profile?: BusinessProfileData | null): SwapSummary | undefined {
+  const legs = match.legs.map((item) => {
+    const from = partyById(item.fromId, profile);
+    const to = partyById(item.toId, profile);
+    return from && to ? { from, to, gives: item.gives } : undefined;
+  });
+
+  if (legs.some((item) => !item)) return undefined;
+  const resolved = legs as SwapLegView[];
+
+  return {
+    id: match.id,
+    kind: match.kind,
+    swapKind: match.swapKind,
+    match: match.match,
+    youGive: resolved.find((item) => item.from.id === me.id)?.gives ?? '',
+    youGet: resolved.find((item) => item.to.id === me.id)?.gives ?? '',
+    others: otherParties(match, profile),
+    legs: resolved,
+    reasons: match.reasons,
+  };
+}
+
+export function describeSwaps(matches: SwapMatch[], profile?: BusinessProfileData | null): SwapSummary[] {
+  return matches
+    .map((match) => describeSwap(match, profile))
+    .filter((summary): summary is SwapSummary => Boolean(summary));
+}

@@ -107,6 +107,34 @@ export function BusinessProfileScreen({
         <DetailRow label="Serves" value={business.serves.join(', ')} />
       </View>
 
+      {business.swapOpen ? (
+        <View style={{ marginTop: spacing[6], gap: spacing[3] }}>
+          <SectionHeader
+            title="Swap"
+            supporting="This business will exchange value instead of taking payment."
+          />
+          <View style={{ flexDirection: 'row' }}>
+            <Chip label="Open to swaps" icon="check" selected />
+          </View>
+          <Text variant="micro" tone="tertiary" style={{ marginTop: spacing[2] }}>
+            They need
+          </Text>
+          <View style={{ flexDirection: 'row', gap: spacing[2], flexWrap: 'wrap' }}>
+            {(business.swapWants ?? []).map((want) => (
+              <Chip key={want} label={want} />
+            ))}
+          </View>
+          <Text variant="micro" tone="tertiary" style={{ marginTop: spacing[2] }}>
+            They can offer
+          </Text>
+          <View style={{ flexDirection: 'row', gap: spacing[2], flexWrap: 'wrap' }}>
+            {(business.swapOffers ?? []).map((offer) => (
+              <Chip key={offer} label={offer} />
+            ))}
+          </View>
+        </View>
+      ) : null}
+
       <View style={{ marginTop: spacing[6], gap: spacing[3] }}>
         <SectionHeader title="Documents" />
         <TrustBadge signal="documents" detail="GST, company registration" />
