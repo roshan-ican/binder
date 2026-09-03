@@ -18,6 +18,10 @@ export type Business = {
   capacity: string;
   serves: string[];
   whyItMatches: string[];
+  /** SWAP — optional so existing rows and call sites stay valid. */
+  swapOpen?: boolean;
+  swapWants?: string[];
+  swapOffers?: string[];
 };
 
 export type BusinessCategory = 'manufacturer' | 'shopkeeper' | 'supplier' | 'service';
@@ -53,6 +57,10 @@ export type BusinessProfileData = {
   offers: string[];
   needs: string[];
   verificationStatus: 'unverified' | 'verified';
+  /** SWAP — mirrors offers/needs so the profile screens stay consistent. */
+  swapOpen?: boolean;
+  swapWants?: string[];
+  swapOffers?: string[];
 };
 
 export type JobSeekerProfileData = {
@@ -89,6 +97,7 @@ export type JobOpportunity = {
 export type JobType = 'full-time' | 'part-time' | 'contract' | 'internship';
 
 export const me = {
+  id: 'me',
   business: 'Roshan Clothing',
   person: 'Roshan',
   industry: 'Fashion & Apparel',
@@ -98,6 +107,9 @@ export const me = {
   offers: ['Manufacturer', 'Distributor'],
   needs: ['Packaging', 'Logistics'],
   completeness: 72,
+  swapOpen: true,
+  swapWants: ['Photography', 'Packaging', 'Catering', 'Job work', 'Audience'],
+  swapOffers: ['Clothing', 'Promotion', 'Content collaboration'],
 };
 
 export const candidate = {
@@ -135,6 +147,9 @@ export const businesses: Business[] = [
       'Active this week',
       'Registration verified',
     ],
+    swapOpen: true,
+    swapWants: ['Fabric', 'Logistics'],
+    swapOffers: ['Job work', 'Leather manufacturing'],
   },
   {
     id: 'northline-tanners',
@@ -153,6 +168,7 @@ export const businesses: Business[] = [
     capacity: '80,000 m / month',
     serves: ['India'],
     whyItMatches: ['Supplies leather in your region', 'MOQ within your range', 'Documents provided'],
+    swapOpen: false,
   },
   {
     id: 'meridian-pack',
@@ -171,6 +187,9 @@ export const businesses: Business[] = [
     capacity: '400,000 / month',
     serves: ['India'],
     whyItMatches: ['Garment packaging capability', 'Same city', 'Completed dealings on Binder'],
+    swapOpen: true,
+    swapWants: ['Clothing', 'Promotion'],
+    swapOffers: ['Packaging'],
   },
   {
     id: 'shakti-logistics',
@@ -189,6 +208,9 @@ export const businesses: Business[] = [
     capacity: '120 vehicles',
     serves: ['North India'],
     whyItMatches: ['Serves your route', 'Registration verified'],
+    swapOpen: true,
+    swapWants: ['Promotion', 'Warehouse space'],
+    swapOffers: ['Logistics', 'Freight'],
   },
   {
     id: 'city-fabric-house',
@@ -207,6 +229,72 @@ export const businesses: Business[] = [
     capacity: 'Daily retail stock',
     serves: ['Kanpur'],
     whyItMatches: ['Same city', 'Low quantity purchases', 'Documents provided'],
+    swapOpen: true,
+    swapWants: ['Photography', 'Promotion'],
+    swapOffers: ['Fabric', 'Retail shelf space'],
+  },
+  {
+    id: 'lens-forty-two',
+    name: 'Lens Forty Two',
+    category: 'service',
+    role: 'Photographer',
+    city: 'Kanpur',
+    region: 'Uttar Pradesh',
+    capability: 'Product & campaign photography',
+    activity: 'Active today',
+    trust: 'verified',
+    match: 'strong',
+    about: 'Product, lookbook and campaign photography for apparel and lifestyle brands. In-house studio with two shooting bays.',
+    offers: ['Photography', 'Content'],
+    moq: 'No minimum',
+    capacity: '8 shoots / month',
+    serves: ['Uttar Pradesh', 'Delhi'],
+    whyItMatches: ['Shoots apparel products', 'Same city', 'Registration verified'],
+    swapOpen: true,
+    swapWants: ['Clothing', 'Studio equipment', 'Catering'],
+    swapOffers: ['Photography', 'Campaign shoots', 'Content collaboration'],
+  },
+  {
+    id: 'copperleaf-cafe',
+    name: 'Copperleaf Café',
+    category: 'service',
+    role: 'Café & catering',
+    city: 'Kanpur',
+    region: 'Uttar Pradesh',
+    capability: 'Catering · 20 to 200 covers',
+    activity: 'Open today',
+    trust: 'documents',
+    match: 'good',
+    about: 'Neighbourhood café running daily service plus event catering for offices, launches and shoots.',
+    offers: ['Catering', 'Event space'],
+    moq: '20 covers',
+    capacity: '200 covers / day',
+    serves: ['Kanpur'],
+    whyItMatches: ['Caters events in your city', 'Same city', 'Documents provided'],
+    swapOpen: true,
+    swapWants: ['Uniforms', 'Photography', 'Promotion'],
+    swapOffers: ['Catering', 'Event space', 'Café audience'],
+  },
+  {
+    id: 'pulse-fitness',
+    name: 'Pulse Fitness Club',
+    category: 'service',
+    role: 'Gym',
+    city: 'Kanpur',
+    region: 'Uttar Pradesh',
+    capability: '2,000 members · 3 branches',
+    activity: 'Active today',
+    trust: 'verified',
+    match: 'good',
+    about: 'Three-branch fitness club with 2,000 active members and an in-club screen and email channel.',
+    offers: ['Member audience', 'In-club promotion'],
+    moq: 'No minimum',
+    capacity: '2,000 members',
+    serves: ['Kanpur'],
+    whyItMatches: ['Audience overlaps your customer', 'Same city', 'Registration verified'],
+    swapOpen: true,
+    swapWants: ['Merchandise', 'Clothing', 'Catering'],
+    swapOffers: ['Audience', 'In-club promotion', 'Member discounts'],
   },
 ];
 
@@ -496,3 +584,184 @@ export const notifications = [
 
 export const searchSuggestions = ['Manufacturer', 'Leather', 'Job work', 'Apparel'];
 export const recentSearches = ['Packaging Kanpur', 'Leather manufacturers'];
+
+/* ---------------------------------------------------------------------------
+ * SWAP
+ *
+ * Binder's exchange layer. A business says what it can offer and what it wants,
+ * and value moves without cash having to. Three kinds:
+ *   service — photographer ↔ clothing brand
+ *   product — café uniforms ↔ catering
+ *   value   — a gym's 2,000 members ↔ member discounts and promotion
+ * ------------------------------------------------------------------------ */
+
+export type SwapKind = 'service' | 'product' | 'value';
+
+/** What a business puts on the table. Wants live on the business itself. */
+export type SwapListing = {
+  id: string;
+  businessId: string;
+  kind: SwapKind;
+  title: string;
+  description: string;
+  /** Indicative only — a swap is negotiated, never priced by Binder. */
+  indicativeValue: string;
+  category: string;
+};
+
+/** One movement of value: `fromId` gives `gives` to `toId`. */
+export type SwapLeg = {
+  fromId: string;
+  toId: string;
+  gives: string;
+  listingId?: string;
+};
+
+export type SwapMatch = {
+  id: string;
+  kind: 'direct' | 'chain';
+  swapKind: SwapKind;
+  /** Two legs for a direct swap, three for a chain. Always a closed loop. */
+  legs: SwapLeg[];
+  reasons: string[];
+  match: MatchQuality;
+};
+
+export type SwapProposal = {
+  id: string;
+  headline: string;
+  counterparties: string;
+  /** Same status language as enquiries. */
+  status: 'draft' | 'active' | 'closed' | 'expired';
+  updated: string;
+};
+
+export const swapListings: SwapListing[] = [
+  {
+    id: 'lens-product-shoot',
+    businessId: 'lens-forty-two',
+    kind: 'service',
+    title: 'Product photography package',
+    description: 'Full day in studio, up to 40 products, retouched exports for web and print.',
+    indicativeValue: '₹25,000 package',
+    category: 'Photography',
+  },
+  {
+    id: 'lens-campaign',
+    businessId: 'lens-forty-two',
+    kind: 'service',
+    title: 'Campaign shoot with model',
+    description: 'Half-day campaign shoot, one model and stylist included, 12 final frames.',
+    indicativeValue: '₹40,000 package',
+    category: 'Photography',
+  },
+  {
+    id: 'copperleaf-catering',
+    businessId: 'copperleaf-cafe',
+    kind: 'product',
+    title: 'Event catering for 50',
+    description: 'Catering for a launch or shoot day — 50 covers, service staff included.',
+    indicativeValue: '₹18,000 value',
+    category: 'Catering',
+  },
+  {
+    id: 'meridian-box-run',
+    businessId: 'meridian-pack',
+    kind: 'product',
+    title: 'Garment box production run',
+    description: '1,000 printed rigid garment boxes from an existing die, four-colour lid.',
+    indicativeValue: '₹22,000 value',
+    category: 'Packaging',
+  },
+  {
+    id: 'pulse-member-access',
+    businessId: 'pulse-fitness',
+    kind: 'value',
+    title: 'Access to 2,000 members',
+    description: 'One campaign across three branches: in-club screens, email list and a sampling table.',
+    indicativeValue: '2,000 member audience',
+    category: 'Audience',
+  },
+  {
+    id: 'city-fabric-lots',
+    businessId: 'city-fabric-house',
+    kind: 'product',
+    title: 'Seasonal fabric lots',
+    description: 'End-of-season cotton and denim lots, sorted and ready to move.',
+    indicativeValue: '₹15,000 value',
+    category: 'Fabric',
+  },
+  {
+    id: 'abc-job-work',
+    businessId: 'abc-leather',
+    kind: 'service',
+    title: 'Job work capacity',
+    description: 'One week of stitching line capacity on outerwear, cut pieces supplied by you.',
+    indicativeValue: '₹40,000 value',
+    category: 'Job work',
+  },
+  {
+    id: 'shakti-freight',
+    businessId: 'shakti-logistics',
+    kind: 'service',
+    title: 'Part-load freight, North India',
+    description: 'Four part-load trips on the Kanpur–Delhi route, insured, within the month.',
+    indicativeValue: '₹32,000 value',
+    category: 'Logistics',
+  },
+];
+
+/** What the user can put on the table. Mirrors `me.swapOffers`. */
+export const mySwapListings: SwapListing[] = [
+  {
+    id: 'my-clothing-lot',
+    businessId: me.id,
+    kind: 'product',
+    title: 'Outerwear from the current line',
+    description: 'Jackets and overshirts from the running collection, your pick of sizes.',
+    indicativeValue: '₹30,000 retail value',
+    category: 'Clothing',
+  },
+  {
+    id: 'my-promotion',
+    businessId: me.id,
+    kind: 'value',
+    title: 'Promotion to our customer list',
+    description: 'A feature in our newsletter and two stories to 14,000 followers.',
+    indicativeValue: '14,000 reach',
+    category: 'Promotion',
+  },
+];
+
+export const swapProposals: SwapProposal[] = [
+  {
+    id: 'swap-meridian',
+    headline: 'Clothing ↔ garment boxes',
+    counterparties: 'Meridian Packaging',
+    status: 'active',
+    updated: 'Updated 2h ago',
+  },
+  {
+    id: 'swap-pulse',
+    headline: 'Outerwear ↔ member audience',
+    counterparties: 'Pulse Fitness Club',
+    status: 'draft',
+    updated: 'Not sent yet',
+  },
+];
+
+export const swapConversations: Conversation[] = [
+  {
+    id: 'swap-lens-forty-two',
+    business: 'Lens Forty Two',
+    preview: 'Happy to shoot the winter line in exchange for jackets.',
+    time: '15m',
+    unread: true,
+    context: 'Swap · Photography ↔ Clothing',
+    messages: [
+      { id: '1', from: 'them', body: 'Happy to shoot the winter line in exchange for jackets.', time: '11:02' },
+      { id: '2', from: 'me', body: 'Works for us. Four jackets against a full product day?', time: '11:09' },
+      { id: '3', from: 'them', body: 'Make it five and I will include the retouching.', time: '11:14' },
+    ],
+  },
+];
