@@ -48,10 +48,11 @@ export function BottomTabs({
         backgroundColor: '#D6D1CB',
         paddingTop: spacing[2],
         paddingBottom: spacing[2] + bottomInset,
+        paddingHorizontal: spacing[2],
         overflow: 'hidden',
       }}
     >
-      <ChromeSurface borderRadius={0} intensity="soft" />
+      <ChromeSurface borderRadius={0} intensity="soft" animated={false} />
       {tabs.map((tab) => {
         const isActive = tab.key === active;
         return (

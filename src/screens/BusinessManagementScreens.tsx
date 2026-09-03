@@ -3,6 +3,7 @@ import { View } from "react-native";
 import {
   ActionRow,
   BackHeader,
+  BusinessIndustryPicker,
   Button,
   Chip,
   ConfirmSheet,
@@ -20,8 +21,7 @@ import {
   TextButton,
   TrustBadge,
 } from "../components";
-import { businesses, me, type BusinessProfileData } from "../data/mock";
-import { businessIndustries } from "../data/businessTaxonomy";
+import { businesses, me, type BusinessProfileData, type BuyerAudience } from "../data/mock";
 import { colors, rhythm, size, spacing } from "../theme";
 
 export function SavedBusinessesScreen({
@@ -89,6 +89,9 @@ export function BusinessProfileEditorScreen({
     profile?.industries ?? [profile?.industry ?? me.industry],
   );
   const [city, setCity] = useState(profile?.city ?? me.city);
+  const [acceptsOrdersFrom, setAcceptsOrdersFrom] = useState<BuyerAudience>(
+    profile?.acceptsOrdersFrom ?? me.acceptsOrdersFrom,
+  );
   const [about, setAbout] = useState(
     "Apparel production partner for growing Indian labels, with in-house sampling and quality control.",
   );
@@ -132,6 +135,12 @@ export function BusinessProfileEditorScreen({
             ))}
           </View>
         </View>
+        <View style={{ marginTop: rhythm.sectionToSection, gap: spacing[2] }}>
+          <SectionHeader title="Who can order" />
+          <Text variant="body" tone="secondary">
+            {acceptsOrdersFrom === "businesses-only" ? "Business buyers only" : "Businesses and individual buyers"}
+          </Text>
+        </View>
         <StatusNotice
           title="Preview mode"
           body="This is how other businesses see your profile."
@@ -148,6 +157,7 @@ export function BusinessProfileEditorScreen({
       city,
       offers: profile?.offers ?? me.offers,
       needs: profile?.needs ?? me.needs,
+      acceptsOrdersFrom,
       verificationStatus: profile?.verificationStatus ?? "unverified",
       gstin: profile?.gstin,
     });
@@ -165,25 +175,14 @@ export function BusinessProfileEditorScreen({
       <View style={{ gap: spacing[5], marginTop: spacing[8] }}>
         <Input label="Business name" value={name} onChangeText={setName} />
         <Input label="Managed by" value={contact} onChangeText={setContact} />
+        <BusinessIndustryPicker selected={industries} onChange={setIndustries} />
         <View style={{ gap: spacing[2] }}>
-          <Text variant="label" tone="secondary">Industries</Text>
+          <Text variant="label" tone="secondary">Who can order from you?</Text>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing[2] }}>
-            {businessIndustries.map((industry) => {
-              const selected = industries.includes(industry);
-              return (
-                <Chip
-                  key={industry}
-                  label={industry}
-                  selected={selected}
-                  onPress={() => setIndustries((current) =>
-                    selected
-                      ? current.length > 1 ? current.filter((item) => item !== industry) : current
-                      : [...current, industry])}
-                />
-              );
-            })}
+            <Chip label="Businesses only" selected={acceptsOrdersFrom === "businesses-only"} onPress={() => setAcceptsOrdersFrom("businesses-only")} />
+            <Chip label="Businesses & individuals" selected={acceptsOrdersFrom === "businesses-and-individuals"} onPress={() => setAcceptsOrdersFrom("businesses-and-individuals")} />
           </View>
-          <Text variant="bodySmall" tone="tertiary">Select all industries that apply.</Text>
+          <Text variant="bodySmall" tone="tertiary">Business accounts do not need GST to join. Individual orders are your choice.</Text>
         </View>
         <Input label="City" value={city} onChangeText={setCity} />
         <Input label="About" value={about} onChangeText={setAbout} multiline />

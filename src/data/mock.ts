@@ -42,6 +42,7 @@ export type Enquiry = {
 };
 
 export type UserRole = 'business' | 'job-seeker';
+export type BuyerAudience = 'businesses-only' | 'businesses-and-individuals';
 
 export type BusinessProfileData = {
   gstin?: string;
@@ -52,6 +53,7 @@ export type BusinessProfileData = {
   city: string;
   offers: string[];
   needs: string[];
+  acceptsOrdersFrom: BuyerAudience;
   verificationStatus: 'unverified' | 'verified';
 };
 
@@ -97,6 +99,7 @@ export const me = {
   region: 'Uttar Pradesh, India',
   offers: ['Manufacturer', 'Distributor'],
   needs: ['Packaging', 'Logistics'],
+  acceptsOrdersFrom: 'businesses-and-individuals' as BuyerAudience,
   completeness: 72,
 };
 

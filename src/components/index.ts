@@ -25,4 +25,5 @@ export { TaxonomyPicker } from './TaxonomyPicker';
 export { JobSwipeDeck } from './JobSwipeDeck';
 export { BusinessMatchDeck, type BusinessMatchItem } from './BusinessMatchDeck';
 export { BusinessTrustGate } from './BusinessTrustGate';
+export { BusinessIndustryPicker } from './BusinessIndustryPicker';
 export { ActionRow, ConfirmSheet, DetailRow, RuledSection, StatusNotice, ToggleRow } from './FlowUI';

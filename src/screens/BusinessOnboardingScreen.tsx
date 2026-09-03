@@ -1,8 +1,7 @@
 import { View } from 'react-native';
 import { Controller, useForm } from 'react-hook-form';
-import { Button, Chip, Input, Screen, ScreenHeading, Text, TrustBadge } from '../components';
-import { businessIndustries } from '../data/businessTaxonomy';
-import type { BusinessProfileData } from '../data/mock';
+import { BusinessIndustryPicker, Button, Chip, Input, Screen, ScreenHeading, Text, TrustBadge } from '../components';
+import type { BusinessProfileData, BuyerAudience } from '../data/mock';
 import { spacing } from '../theme';
 
 type FormValues = {
@@ -12,10 +11,11 @@ type FormValues = {
   city: string;
   offers: string[];
   needs: string;
+  acceptsOrdersFrom: BuyerAudience;
 };
 
 const defaults: FormValues = {
-  businessName: '', contactName: '', industries: [], city: '', offers: [], needs: '',
+  businessName: '', contactName: '', industries: [], city: '', offers: [], needs: '', acceptsOrdersFrom: 'businesses-and-individuals',
 };
 
 const offerOptions = ['Manufacturer', 'Supplier', 'Distributor', 'Wholesaler', 'Retailer', 'Service provider'] as const;
@@ -31,6 +31,7 @@ export function BusinessOnboardingScreen({ onComplete }: { onComplete: (profile:
     city: values.city.trim(),
     offers: values.offers,
     needs: values.needs.split(',').map((item) => item.trim()).filter(Boolean),
+    acceptsOrdersFrom: values.acceptsOrdersFrom,
     verificationStatus: 'unverified',
   });
 
@@ -46,24 +47,7 @@ export function BusinessOnboardingScreen({ onComplete }: { onComplete: (profile:
           name="industries"
           rules={{ validate: (value) => value.length > 0 || 'Select at least one industry.' }}
           render={({ field: { value, onChange }, fieldState: { error } }) => (
-            <View style={{ gap: spacing[2] }}>
-              <Text variant="label" tone="secondary">Industries</Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
-                {businessIndustries.map((industry) => (
-                  <Chip
-                    key={industry}
-                    label={industry}
-                    selected={value.includes(industry)}
-                    onPress={() => onChange(value.includes(industry)
-                      ? value.filter((item) => item !== industry)
-                      : [...value, industry])}
-                  />
-                ))}
-              </View>
-              <Text variant="bodySmall" tone={error ? 'danger' : 'tertiary'}>
-                {error?.message ?? 'Select all industries that apply.'}
-              </Text>
-            </View>
+            <BusinessIndustryPicker selected={value} onChange={onChange} error={error?.message} />
           )}
         />
         <FormInput control={control} name="city" label="City" placeholder="Kanpur" />
@@ -81,13 +65,27 @@ export function BusinessOnboardingScreen({ onComplete }: { onComplete: (profile:
             </View>
           )}
         />
+        <Controller
+          control={control}
+          name="acceptsOrdersFrom"
+          render={({ field: { value, onChange } }) => (
+            <View style={{ gap: spacing[2] }}>
+              <Text variant="label" tone="secondary">Who can order from you?</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
+                <Chip label="Businesses only" selected={value === 'businesses-only'} onPress={() => onChange('businesses-only')} />
+                <Chip label="Businesses & individuals" selected={value === 'businesses-and-individuals'} onPress={() => onChange('businesses-and-individuals')} />
+              </View>
+              <Text variant="bodySmall" tone="tertiary">Business accounts can join without GST. You decide whether individual buyers can order too.</Text>
+            </View>
+          )}
+        />
         <FormInput control={control} name="needs" label="What do you need?" placeholder="Packaging, logistics" helper="Separate multiple items with commas." />
       </View>
     </Screen>
   );
 }
 
-type TextFieldName = Exclude<keyof FormValues, 'offers' | 'industries'>;
+type TextFieldName = Exclude<keyof FormValues, 'offers' | 'industries' | 'acceptsOrdersFrom'>;
 function FormInput({ control, name, label, placeholder, helper }: { control: ReturnType<typeof useForm<FormValues>>['control']; name: TextFieldName; label: string; placeholder: string; helper?: string }) {
   return <Controller control={control} name={name} rules={{ validate: (value) => value.trim().length > 0 || 'Please enter a value.' }} render={({ field: { value, onChange }, fieldState: { error } }) => <Input label={label} value={value} onChangeText={onChange} placeholder={placeholder} helper={helper} error={error?.message} />} />;
 }
