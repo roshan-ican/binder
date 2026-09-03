@@ -108,8 +108,21 @@ export const me = {
   needs: ['Packaging', 'Logistics'],
   completeness: 72,
   swapOpen: true,
-  swapWants: ['Photography', 'Packaging', 'Catering', 'Job work', 'Audience'],
-  swapOffers: ['Clothing', 'Promotion', 'Content collaboration'],
+  swapWants: [
+    'Photography',
+    'Packaging',
+    'Catering',
+    'Fabric',
+    'Job work',
+    'Audience',
+    'Campaign',
+    'Printing',
+    'Leather',
+    'Accommodation',
+    'Warehouse space',
+    'Accounts',
+  ],
+  swapOffers: ['Clothing', 'Promotion', 'Content collaboration', 'Surplus stock'],
 };
 
 export const candidate = {
@@ -168,7 +181,9 @@ export const businesses: Business[] = [
     capacity: '80,000 m / month',
     serves: ['India'],
     whyItMatches: ['Supplies leather in your region', 'MOQ within your range', 'Documents provided'],
-    swapOpen: false,
+    swapOpen: true,
+    swapWants: ['Clothing', 'Promotion'],
+    swapOffers: ['Finished leather', 'Raw materials'],
   },
   {
     id: 'meridian-pack',
@@ -231,7 +246,7 @@ export const businesses: Business[] = [
     whyItMatches: ['Same city', 'Low quantity purchases', 'Documents provided'],
     swapOpen: true,
     swapWants: ['Photography', 'Promotion'],
-    swapOffers: ['Fabric', 'Retail shelf space'],
+    swapOffers: ['Fabric', 'Retail shelf space', 'Surplus stock'],
   },
   {
     id: 'lens-forty-two',
@@ -295,6 +310,111 @@ export const businesses: Business[] = [
     swapOpen: true,
     swapWants: ['Merchandise', 'Clothing', 'Catering'],
     swapOffers: ['Audience', 'In-club promotion', 'Member discounts'],
+  },
+  {
+    id: 'grand-mercer-hotel',
+    name: 'Grand Mercer Hotel',
+    category: 'service',
+    role: 'Hotel',
+    city: 'Kanpur',
+    region: 'Uttar Pradesh',
+    capability: '64 rooms · midweek availability',
+    activity: 'Active today',
+    trust: 'verified',
+    match: 'good',
+    about: 'Business hotel near the industrial belt. Midweek occupancy runs low and those rooms expire unsold every night.',
+    offers: ['Accommodation', 'Event space'],
+    moq: '1 night',
+    capacity: '64 rooms',
+    serves: ['Kanpur'],
+    whyItMatches: ['Hosts your visiting buyers', 'Same city', 'Registration verified'],
+    swapOpen: true,
+    swapWants: ['Clothing', 'Promotion', 'Uniforms'],
+    swapOffers: ['Accommodation', 'Empty midweek rooms', 'Event space'],
+  },
+  {
+    id: 'northbeam-agency',
+    name: 'Northbeam Agency',
+    category: 'service',
+    role: 'Marketing agency',
+    city: 'Lucknow',
+    region: 'Uttar Pradesh',
+    capability: 'Campaigns & influencer marketing',
+    activity: 'Active today',
+    trust: 'documents',
+    match: 'good',
+    about: 'Performance and influencer campaigns for consumer brands. Takes part payment in stock from labels it believes in.',
+    offers: ['Advertising', 'Influencer marketing'],
+    moq: 'One campaign',
+    capacity: '6 clients',
+    serves: ['North India'],
+    whyItMatches: ['Runs campaigns for apparel labels', 'Accepts stock as part payment', 'Documents provided'],
+    swapOpen: true,
+    swapWants: ['Surplus stock', 'Clothing', 'Content collaboration'],
+    swapOffers: ['Campaign', 'Advertising', 'Influencer marketing'],
+  },
+  {
+    id: 'harbour-associates',
+    name: 'Harbour Associates',
+    category: 'service',
+    role: 'Chartered accountants',
+    city: 'Kanpur',
+    region: 'Uttar Pradesh',
+    capability: 'Books, GST & compliance',
+    activity: 'Active this week',
+    trust: 'verified',
+    match: 'potential',
+    about: 'Small practice handling books, GST filing and compliance for manufacturers and retailers.',
+    offers: ['Accounting', 'Compliance'],
+    moq: 'Monthly retainer',
+    capacity: '40 clients',
+    serves: ['Uttar Pradesh'],
+    whyItMatches: ['Handles GST for manufacturers', 'Same city', 'Registration verified'],
+    swapOpen: true,
+    swapWants: ['Content collaboration', 'Photography', 'Campaign'],
+    swapOffers: ['Accounts', 'GST filing', 'Compliance'],
+  },
+  {
+    id: 'northgate-works',
+    name: 'Northgate Works',
+    category: 'service',
+    role: 'Warehouse & studio space',
+    city: 'Kanpur',
+    region: 'Uttar Pradesh',
+    capability: 'Storage bays & a shoot floor',
+    activity: 'Active today',
+    trust: 'documents',
+    match: 'good',
+    about: 'Converted mill offering storage bays, a photography floor and meeting rooms on flexible terms.',
+    offers: ['Warehousing', 'Studio hire'],
+    moq: 'One week',
+    capacity: '12 bays',
+    serves: ['Kanpur'],
+    whyItMatches: ['Storage near your unit', 'Same city', 'Documents provided'],
+    swapOpen: true,
+    swapWants: ['Promotion', 'Clothing', 'Catering'],
+    swapOffers: ['Warehouse space', 'Studio floor', 'Meeting rooms'],
+  },
+  {
+    id: 'crestline-press',
+    name: 'Crestline Print Works',
+    category: 'manufacturer',
+    role: 'Printing press',
+    city: 'Kanpur',
+    region: 'Uttar Pradesh',
+    capability: 'Screen & DTG printing on garments',
+    activity: 'Active today',
+    trust: 'proven',
+    match: 'good',
+    about: 'Garment screen and direct-to-garment printing. Two of five machines sit idle most weeks.',
+    offers: ['Garment printing'],
+    moq: '100 pieces',
+    capacity: '5 machines',
+    serves: ['Uttar Pradesh'],
+    whyItMatches: ['Prints on garments', 'Same city', 'Completed dealings on Binder'],
+    swapOpen: true,
+    swapWants: ['Fabric', 'Blank garments'],
+    swapOffers: ['Printing', 'Press time'],
   },
 ];
 
@@ -608,7 +728,23 @@ export const recentSearches = ['Packaging Kanpur', 'Leather manufacturers'];
  *   value   — a gym's 2,000 members ↔ member discounts and promotion
  * ------------------------------------------------------------------------ */
 
-export type SwapKind = 'service' | 'product' | 'value';
+/**
+ * What a listing *is*. Pairings — product↔service, service↔service and the rest
+ * — are derived from the two sides of a match, never stored: seven categories
+ * make forty-nine combinations, and none of them need a name of their own.
+ *
+ * `surplus` deliberately overlaps `product` and `materials`. The difference is
+ * intent: surplus means "I want this gone", which is a different negotiating
+ * posture and one of SWAP's strongest cases.
+ */
+export type SwapKind =
+  | 'product'
+  | 'service'
+  | 'surplus'
+  | 'capacity'
+  | 'promotion'
+  | 'space'
+  | 'materials';
 
 /** What a business puts on the table. Wants live on the business itself. */
 export type SwapListing = {
@@ -627,12 +763,16 @@ export type SwapLeg = {
   fromId: string;
   toId: string;
   gives: string;
+  /** The category of the thing moving. Pairings are derived from these. */
+  kind: SwapKind;
+  indicativeValue?: string;
   listingId?: string;
 };
 
 export type SwapMatch = {
   id: string;
   kind: 'direct' | 'chain';
+  /** The category you receive — what the Swaps filter works on. */
   swapKind: SwapKind;
   /** Two legs for a direct swap, three for a chain. Always a closed loop. */
   legs: SwapLeg[];
@@ -671,7 +811,7 @@ export const swapListings: SwapListing[] = [
   {
     id: 'copperleaf-catering',
     businessId: 'copperleaf-cafe',
-    kind: 'product',
+    kind: 'service',
     title: 'Event catering for 50',
     description: 'Catering for a launch or shoot day — 50 covers, service staff included.',
     indicativeValue: '₹18,000 value',
@@ -689,7 +829,7 @@ export const swapListings: SwapListing[] = [
   {
     id: 'pulse-member-access',
     businessId: 'pulse-fitness',
-    kind: 'value',
+    kind: 'promotion',
     title: 'Access to 2,000 members',
     description: 'One campaign across three branches: in-club screens, email list and a sampling table.',
     indicativeValue: '2,000 member audience',
@@ -698,7 +838,7 @@ export const swapListings: SwapListing[] = [
   {
     id: 'city-fabric-lots',
     businessId: 'city-fabric-house',
-    kind: 'product',
+    kind: 'surplus',
     title: 'Seasonal fabric lots',
     description: 'End-of-season cotton and denim lots, sorted and ready to move.',
     indicativeValue: '₹15,000 value',
@@ -716,11 +856,74 @@ export const swapListings: SwapListing[] = [
   {
     id: 'shakti-freight',
     businessId: 'shakti-logistics',
-    kind: 'service',
+    kind: 'capacity',
     title: 'Part-load freight, North India',
     description: 'Four part-load trips on the Kanpur–Delhi route, insured, within the month.',
     indicativeValue: '₹32,000 value',
     category: 'Logistics',
+  },
+  {
+    id: 'mercer-midweek-rooms',
+    businessId: 'grand-mercer-hotel',
+    kind: 'capacity',
+    title: 'Ten midweek room nights',
+    description: 'Tuesday to Thursday rooms that would otherwise go unsold, for visiting buyers or your team.',
+    indicativeValue: '₹38,000 value',
+    category: 'Accommodation',
+  },
+  {
+    id: 'northbeam-campaign',
+    businessId: 'northbeam-agency',
+    kind: 'promotion',
+    title: 'One-month influencer campaign',
+    description: 'Four creators, brief to delivery, plus paid amplification on the two best performing posts.',
+    indicativeValue: '₹85,000 value',
+    category: 'Campaign',
+  },
+  {
+    id: 'harbour-books',
+    businessId: 'harbour-associates',
+    kind: 'service',
+    title: 'A year of books and GST filing',
+    description: 'Monthly bookkeeping, GST returns and annual filing for a single-unit manufacturer.',
+    indicativeValue: '₹60,000 value',
+    category: 'Accounts',
+  },
+  {
+    id: 'northgate-bay',
+    businessId: 'northgate-works',
+    kind: 'space',
+    title: 'A storage bay for six months',
+    description: 'One 600 sq ft bay with loading access, plus two days a month on the shoot floor.',
+    indicativeValue: '₹90,000 value',
+    category: 'Warehouse space',
+  },
+  {
+    id: 'crestline-press-time',
+    businessId: 'crestline-press',
+    kind: 'capacity',
+    title: 'Idle press time, 2,000 pieces',
+    description: 'Screen printing on garments you supply, run on the machines that sit idle midweek.',
+    indicativeValue: '₹45,000 value',
+    category: 'Printing',
+  },
+  {
+    id: 'northline-leather-lot',
+    businessId: 'northline-tanners',
+    kind: 'materials',
+    title: 'Finished leather, 400 metres',
+    description: 'Vegetable-tanned finished leather in three colourways, ready to cut.',
+    indicativeValue: '₹1,20,000 value',
+    category: 'Leather',
+  },
+  {
+    id: 'abc-spare-parts',
+    businessId: 'abc-leather',
+    kind: 'surplus',
+    title: 'Spare machine parts and trims',
+    description: 'Surplus buckles, zips and stitching machine parts from a line we retired.',
+    indicativeValue: '₹12,000 value',
+    category: 'Trims',
   },
 ];
 
@@ -738,11 +941,29 @@ export const mySwapListings: SwapListing[] = [
   {
     id: 'my-promotion',
     businessId: me.id,
-    kind: 'value',
+    kind: 'promotion',
     title: 'Promotion to our customer list',
     description: 'A feature in our newsletter and two stories to 14,000 followers.',
     indicativeValue: '14,000 reach',
     category: 'Promotion',
+  },
+  {
+    id: 'my-content',
+    businessId: me.id,
+    kind: 'service',
+    title: 'Co-branded content production',
+    description: 'We shoot, write and produce a content series with you and run it on both channels.',
+    indicativeValue: '₹55,000 value',
+    category: 'Content collaboration',
+  },
+  {
+    id: 'my-surplus',
+    businessId: me.id,
+    kind: 'surplus',
+    title: 'Last season overstock',
+    description: 'Two hundred pieces of unsold winter stock, mixed sizes. We would rather move it than discount it.',
+    indicativeValue: '₹1,80,000 retail value',
+    category: 'Surplus stock',
   },
 ];
 

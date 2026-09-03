@@ -13,7 +13,7 @@ import {
   TrustBadge,
 } from '../components';
 import { me, type BusinessProfileData } from '../data/mock';
-import { describeSwap, findSwapMatch, swapKindLabel, type SwapLegView } from '../data/swapMatching';
+import { describeSwap, findSwapMatch, pairLabel, swapKindLabel, type SwapLegView } from '../data/swapMatching';
 import { colors, rhythm, size, spacing } from '../theme';
 
 /**
@@ -65,7 +65,7 @@ export function SwapMatchScreen({
 
       <View style={{ gap: spacing[3], paddingTop: spacing[2] }}>
         <Text variant="micro" tone="chrome">
-          {isChain ? `${swapKindLabel[summary.swapKind]} · 3-way chain` : swapKindLabel[summary.swapKind]}
+          {isChain ? `${pairLabel(summary.legs)} · 3-WAY CHAIN` : pairLabel(summary.legs)}
         </Text>
         <Text variant="heading1" accessibilityRole="header">
           {summary.others.map((party) => party.name).join(isChain ? ' → ' : ' ↔ ')}
@@ -88,6 +88,28 @@ export function SwapMatchScreen({
           <LegRow key={`${leg.from.id}-${leg.to.id}`} leg={leg} step={index + 1} />
         ))}
       </View>
+
+      {summary.youGiveValue || summary.youGetValue ? (
+        <View style={{ marginTop: spacing[6], gap: spacing[3] }}>
+          <SectionHeader
+            title="Indicative value"
+            supporting="Each side states its own. Binder does not price a swap, and an unequal swap is still a swap if both sides want it."
+          />
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: spacing[4] }}>
+            <View style={{ flex: 1, gap: spacing[1] }}>
+              <Text variant="micro" tone="tertiary">You give</Text>
+              <Text variant="body" tone="secondary">{summary.youGiveValue ?? 'Not stated'}</Text>
+            </View>
+            <View style={{ flex: 1, gap: spacing[1] }}>
+              <Text variant="micro" tone="tertiary">You get</Text>
+              <Text variant="body">{summary.youGetValue ?? 'Not stated'}</Text>
+            </View>
+          </View>
+          {summary.balanceNote ? (
+            <Text variant="bodySmall" tone="tertiary">{summary.balanceNote}</Text>
+          ) : null}
+        </View>
+      ) : null}
 
       <Divider style={{ marginTop: spacing[6] }} />
 
@@ -147,6 +169,10 @@ function LegRow({ leg, step }: { leg: SwapLegView; step: number }) {
         </Text>
         <Text variant="body" tone="secondary">
           {leg.gives}
+        </Text>
+        <Text variant="micro" tone="tertiary">
+          {swapKindLabel[leg.kind]}
+          {leg.indicativeValue ? ` · ${leg.indicativeValue}` : ''}
         </Text>
       </View>
     </View>

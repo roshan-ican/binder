@@ -1,5 +1,5 @@
 import { View } from 'react-native';
-import type { SwapSummary } from '../data/swapMatching';
+import { pairLabel, type SwapSummary } from '../data/swapMatching';
 import { colors, radius, size, spacing } from '../theme';
 import { Card } from './Card';
 import { Divider } from './Divider';
@@ -8,12 +8,6 @@ import { Logo } from './Logo';
 import { MatchLabel } from './MatchLabel';
 import { Text } from './Text';
 import { TrustBadge } from './TrustBadge';
-
-const kindLabel: Record<SwapSummary['swapKind'], string> = {
-  service: 'Service swap',
-  product: 'Product swap',
-  value: 'Value swap',
-};
 
 /**
  * A swap is a loop, so the card leads with the loop: who is in it, what leaves
@@ -25,10 +19,10 @@ export function SwapCard({ summary, onPress }: { summary: SwapSummary; onPress?:
   const [counterpart] = summary.others;
 
   return (
-    <Card onPress={onPress} accessibilityLabel={`${kindLabel[summary.swapKind]} with ${names(summary)}`}>
+    <Card onPress={onPress} accessibilityLabel={`${pairLabel(summary.legs)} with ${names(summary)}`}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing[3] }}>
-        <Text variant="micro" tone="chrome">
-          {isChain ? `${kindLabel[summary.swapKind]} · 3-way chain` : kindLabel[summary.swapKind]}
+        <Text variant="micro" tone="chrome" style={{ flex: 1 }}>
+          {isChain ? `${pairLabel(summary.legs)} · 3-WAY CHAIN` : pairLabel(summary.legs)}
         </Text>
         <MatchLabel quality={summary.match} />
       </View>

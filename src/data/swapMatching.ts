@@ -82,17 +82,35 @@ export function partyById(id: string, profile?: BusinessProfileData | null): Swa
  */
 type Give = { leg: Omit<SwapLeg, 'toId' | 'fromId'>; kind: SwapKind; wanted: string };
 
+/**
+ * The wants are the outer loop on purpose: a business gets the thing it asked
+ * for first, not whichever of your listings happens to sit at the top. Ask a
+ * marketing agency that wants surplus stock, and it should be offered the
+ * surplus stock rather than the new season.
+ */
 function findGive(from: SwapParty, to: SwapParty): Give | null {
-  for (const listing of from.listings) {
-    const wanted = to.wants.find(
-      (want) => containsTerm(listing.category, want) || containsTerm(listing.title, want),
+  for (const wanted of to.wants) {
+    const listing = from.listings.find(
+      (item) => containsTerm(item.category, wanted) || containsTerm(item.title, wanted),
     );
-    if (wanted) return { leg: { gives: listing.title, listingId: listing.id }, kind: listing.kind, wanted };
+    if (listing) {
+      return {
+        leg: {
+          gives: listing.title,
+          kind: listing.kind,
+          indicativeValue: listing.indicativeValue,
+          listingId: listing.id,
+        },
+        kind: listing.kind,
+        wanted,
+      };
+    }
   }
 
+  // Fall back to the bare offer labels, which carry no category of their own.
   for (const offer of from.gives) {
     const wanted = to.wants.find((want) => containsTerm(offer, want));
-    if (wanted) return { leg: { gives: offer }, kind: 'service', wanted };
+    if (wanted) return { leg: { gives: offer, kind: 'service' }, kind: 'service', wanted };
   }
 
   return null;
@@ -166,6 +184,9 @@ export function findSwapChains(profile?: BusinessProfileData | null): SwapMatch[
 
       const cities = [mine.city, first.city, second.city];
       const sameCity = cities.every((city) => containsTerm(city, mine.city));
+      // Name the business the loop actually reaches — the one you could not
+      // have swapped with directly. That is the whole reason the chain exists.
+      const unreachable = !directPartners.has(second.id) ? second : first;
 
       chains.push({
         id: `swap-chain:${first.id}:${second.id}`,
@@ -173,7 +194,7 @@ export function findSwapChains(profile?: BusinessProfileData | null): SwapMatch[
         swapKind: secondGives.kind,
         legs: [leg(mine, first, iGive), leg(first, second, firstGives), leg(second, mine, secondGives)],
         reasons: [
-          `A one-to-one swap with ${first.name} does not close — this loop does`,
+          `You cannot swap with ${unreachable.name} one-to-one — this loop reaches them`,
           `Three businesses, no cash: you give ${lower(iGive.leg.gives)} and receive ${lower(secondGives.leg.gives)}`,
           sameCity ? `All three in ${mine.city}` : `Spans ${unique(cities).join(', ')}`,
         ],
@@ -199,11 +220,57 @@ export function otherParties(match: SwapMatch, profile?: BusinessProfileData | n
   return ids.map((id) => partyById(id, profile)).filter((party): party is SwapParty => Boolean(party));
 }
 
+/** Every category, in the order they appear in filters and pickers. */
+export const swapKinds: SwapKind[] = [
+  'product',
+  'service',
+  'surplus',
+  'capacity',
+  'promotion',
+  'space',
+  'materials',
+];
+
+/** What one side is putting on the table. */
 export const swapKindLabel: Record<SwapKind, string> = {
-  service: 'Service swap',
-  product: 'Product swap',
-  value: 'Value swap',
+  product: 'Products',
+  service: 'Services',
+  surplus: 'Surplus stock',
+  capacity: 'Spare capacity',
+  promotion: 'Promotion',
+  space: 'Space & equipment',
+  materials: 'Raw materials',
 };
+
+/** The short form used on filter chips and pickers. */
+export const swapKindShortLabel: Record<SwapKind, string> = {
+  product: 'Products',
+  service: 'Services',
+  surplus: 'Surplus',
+  capacity: 'Capacity',
+  promotion: 'Promotion',
+  space: 'Space',
+  materials: 'Materials',
+};
+
+export const swapKindHelper: Record<SwapKind, string> = {
+  product: 'Finished goods or stock you can hand over.',
+  service: 'Work you perform — a shoot, a design, an audit.',
+  surplus: 'Dead stock, overstock, seasonal leftovers, spare parts.',
+  capacity: 'Capacity that expires unused — machine time, empty rooms, return trips.',
+  promotion: 'Advertising, influencer reach, your audience or customer list.',
+  space: 'Workspace, warehousing, machinery, vehicles, venues, studios.',
+  materials: 'Raw inputs — fabric, leather, board, metal, agricultural produce.',
+};
+
+/**
+ * Pairings are derived, never stored. Seven categories make forty-nine
+ * combinations and not one of them needs a name of its own.
+ */
+export function pairLabel(legs: { kind: SwapKind }[]): string {
+  if (legs.length > 2) return legs.map((item) => swapKindShortLabel[item.kind]).join(' → ');
+  return legs.map((item) => swapKindLabel[item.kind]).join(' ↔ ');
+}
 
 function quality(value: SwapMatch['match']) {
   return value === 'strong' ? 2 : value === 'good' ? 1 : 0;
@@ -222,7 +289,13 @@ function lower(value: string) {
  * lookup logic.
  * ---------------------------------------------------------------------- */
 
-export type SwapLegView = { from: SwapParty; to: SwapParty; gives: string };
+export type SwapLegView = {
+  from: SwapParty;
+  to: SwapParty;
+  gives: string;
+  kind: SwapKind;
+  indicativeValue?: string;
+};
 
 export type SwapSummary = {
   id: string;
@@ -232,6 +305,13 @@ export type SwapSummary = {
   /** What leaves your business, and what comes back to it. */
   youGive: string;
   youGet: string;
+  youGiveValue?: string;
+  youGetValue?: string;
+  /**
+   * Information only. Matching never gates on value parity — a swap is
+   * negotiated, and each side prices its own half at cost, not retail.
+   */
+  balanceNote?: string;
   others: SwapParty[];
   legs: SwapLegView[];
   reasons: string[];
@@ -241,23 +321,54 @@ export function describeSwap(match: SwapMatch, profile?: BusinessProfileData | n
   const legs = match.legs.map((item) => {
     const from = partyById(item.fromId, profile);
     const to = partyById(item.toId, profile);
-    return from && to ? { from, to, gives: item.gives } : undefined;
+    return from && to
+      ? { from, to, gives: item.gives, kind: item.kind, indicativeValue: item.indicativeValue }
+      : undefined;
   });
 
   if (legs.some((item) => !item)) return undefined;
   const resolved = legs as SwapLegView[];
+  const given = resolved.find((item) => item.from.id === me.id);
+  const received = resolved.find((item) => item.to.id === me.id);
 
   return {
     id: match.id,
     kind: match.kind,
     swapKind: match.swapKind,
     match: match.match,
-    youGive: resolved.find((item) => item.from.id === me.id)?.gives ?? '',
-    youGet: resolved.find((item) => item.to.id === me.id)?.gives ?? '',
+    youGive: given?.gives ?? '',
+    youGet: received?.gives ?? '',
+    youGiveValue: given?.indicativeValue,
+    youGetValue: received?.indicativeValue,
+    balanceNote: balanceNote(given?.indicativeValue, received?.indicativeValue),
     others: otherParties(match, profile),
     legs: resolved,
     reasons: match.reasons,
   };
+}
+
+/**
+ * A plain read on the two indicative values, shown so both sides can see the
+ * shape of the deal. It never filters anything out: an unequal swap is still a
+ * swap if both sides want it.
+ */
+function balanceNote(give?: string, get?: string): string | undefined {
+  const giveAmount = rupees(give);
+  const getAmount = rupees(get);
+  if (!giveAmount || !getAmount) return undefined;
+
+  const ratio = giveAmount / getAmount;
+  if (ratio > 1.25) return 'By the indicative values, you would be giving more.';
+  if (ratio < 0.8) return 'By the indicative values, you would be getting more.';
+  return 'The indicative values are roughly balanced.';
+}
+
+/** Reads Indian-grouped amounts such as "₹1,20,000 value". */
+function rupees(value?: string) {
+  const match = value?.match(/₹\s*([\d,]+)/);
+  if (!match) return undefined;
+  const amount = Number(match[1].replace(/,/g, ''));
+  return Number.isFinite(amount) && amount > 0 ? amount : undefined;
 }
 
 export function describeSwaps(matches: SwapMatch[], profile?: BusinessProfileData | null): SwapSummary[] {

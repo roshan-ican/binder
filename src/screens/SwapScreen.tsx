@@ -21,17 +21,19 @@ import {
   type BusinessProfileData,
   type SwapKind,
 } from '../data/mock';
-import { describeSwaps, findDirectSwaps, findSwapChains } from '../data/swapMatching';
+import { describeSwaps, findDirectSwaps, findSwapChains, swapKindShortLabel, swapKinds } from '../data/swapMatching';
 import { colors, pagePadding, rhythm, size, spacing } from '../theme';
 
 type KindFilter = 'all' | SwapKind;
 
+/** Filters on the category you would receive. */
 const kindFilters: { key: KindFilter; label: string }[] = [
   { key: 'all', label: 'All' },
-  { key: 'service', label: 'Service' },
-  { key: 'product', label: 'Product' },
-  { key: 'value', label: 'Value' },
+  ...swapKinds.map((kind) => ({ key: kind as KindFilter, label: swapKindShortLabel[kind] })),
 ];
+
+/** Chips wrap, but a dozen of them stops being scannable. */
+const maxChips = 8;
 
 /**
  * The second mode of the Match tab. Where the deck answers "who can sell me
@@ -116,7 +118,12 @@ export function SwapScreen({
         />
       ) : (
         <>
-          <View style={{ flexDirection: 'row', gap: spacing[2], marginTop: rhythm.sectionToSection }}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={{ marginTop: rhythm.sectionToSection }}
+            contentContainerStyle={{ flexDirection: 'row', gap: spacing[2], paddingRight: spacing[5] }}
+          >
             {kindFilters.map((filter) => (
               <Chip
                 key={filter.key}
@@ -125,7 +132,7 @@ export function SwapScreen({
                 onPress={() => setKind(filter.key)}
               />
             ))}
-          </View>
+          </ScrollView>
 
           <View style={{ marginTop: rhythm.cardToCard, gap: spacing[3] }}>
             <SectionHeader
@@ -226,11 +233,19 @@ function ChipRow({ labels, empty }: { labels: string[]; empty: string }) {
     );
   }
 
+  const shown = labels.slice(0, maxChips);
+  const remaining = labels.length - shown.length;
+
   return (
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
-      {labels.map((label) => (
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing[2] }}>
+      {shown.map((label) => (
         <Chip key={label} label={label} />
       ))}
+      {remaining > 0 ? (
+        <Text variant="bodySmall" tone="tertiary">
+          +{remaining} more
+        </Text>
+      ) : null}
     </View>
   );
 }

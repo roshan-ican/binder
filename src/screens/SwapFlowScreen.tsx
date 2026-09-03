@@ -17,6 +17,7 @@ import {
   TextButton,
 } from '../components';
 import type { SwapKind } from '../data/mock';
+import { swapKindHelper, swapKindShortLabel, swapKinds } from '../data/swapMatching';
 import { colors, rhythm, size, spacing } from '../theme';
 
 export type SwapDraft = {
@@ -28,19 +29,19 @@ export type SwapDraft = {
   wants: string;
 };
 
-const kinds: { key: SwapKind; label: string; helper: string }[] = [
-  { key: 'service', label: 'Service', helper: 'Work you can do for another business.' },
-  { key: 'product', label: 'Product', helper: 'Goods or stock you can hand over.' },
-  { key: 'value', label: 'Value', helper: 'Exposure, audience, space or distribution.' },
-];
+const kinds = swapKinds.map((key) => ({
+  key,
+  label: swapKindShortLabel[key],
+  helper: swapKindHelper[key],
+}));
 
 const initialDraft: SwapDraft = {
-  title: 'Outerwear from the current line',
-  kind: 'product',
-  category: 'Clothing',
-  indicativeValue: '₹30,000 retail value',
-  description: 'Jackets and overshirts from the running collection, your pick of sizes, up to 12 pieces.',
-  wants: 'Photography, Packaging, Catering',
+  title: 'Last season overstock',
+  kind: 'surplus',
+  category: 'Surplus stock',
+  indicativeValue: '₹1,80,000 retail value',
+  description: 'Two hundred pieces of unsold winter stock, mixed sizes. We would rather move it than discount it.',
+  wants: 'Campaign, Warehouse space, Printing',
 };
 
 /**
@@ -181,7 +182,7 @@ export function SwapFlowScreen({
         <Input label="What you are offering" value={draft.title} onChangeText={field('title')} error={errors.title} />
 
         <View style={{ gap: spacing[2] }}>
-          <Text variant="label" tone="secondary">Type of swap</Text>
+          <Text variant="label" tone="secondary">What kind of thing is it?</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
             {kinds.map((item) => (
               <Chip
