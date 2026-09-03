@@ -17,11 +17,19 @@ import {
 import {
   me,
   mySwapListings,
+  mySwapRequests,
   swapProposals,
   type BusinessProfileData,
   type SwapKind,
 } from '../data/mock';
-import { describeSwaps, findDirectSwaps, findSwapChains, swapKindShortLabel, swapKinds } from '../data/swapMatching';
+import {
+  describeSwaps,
+  findDirectSwaps,
+  findRequestSwaps,
+  findSwapChains,
+  swapKindShortLabel,
+  swapKinds,
+} from '../data/swapMatching';
 import { colors, pagePadding, rhythm, size, spacing } from '../theme';
 
 type KindFilter = 'all' | SwapKind;
@@ -48,6 +56,8 @@ export function SwapScreen({
   onCreateListing,
   onEditSwapProfile,
   onOpenConversation,
+  onOpenRequest,
+  onCreateRequest,
 }: {
   profile: BusinessProfileData | null;
   swapOpen: boolean;
@@ -56,6 +66,8 @@ export function SwapScreen({
   onCreateListing: () => void;
   onEditSwapProfile: () => void;
   onOpenConversation: (id: string) => void;
+  onOpenRequest: (id: string) => void;
+  onCreateRequest: () => void;
 }) {
   const insets = useSafeAreaInsets();
   const [kind, setKind] = useState<KindFilter>('all');
@@ -63,6 +75,13 @@ export function SwapScreen({
   const direct = useMemo(() => describeSwaps(findDirectSwaps(profile), profile), [profile]);
   const chains = useMemo(() => describeSwaps(findSwapChains(profile), profile), [profile]);
 
+  const requests = useMemo(
+    () =>
+      mySwapRequests
+        .filter((request) => request.status === 'active')
+        .map((request) => ({ request, answers: findRequestSwaps(request, profile).length })),
+    [profile],
+  );
   const wants = profile?.swapWants ?? me.swapWants;
   const offers = profile?.swapOffers ?? me.swapOffers;
   const visibleDirect = direct.filter((item) => kind === 'all' || item.swapKind === kind);
@@ -166,6 +185,53 @@ export function SwapScreen({
           ) : null}
         </>
       )}
+
+      <View style={{ marginTop: rhythm.sectionToSection, gap: spacing[3] }}>
+        <SectionHeader
+          title="Your procurement requests"
+          action="Post"
+          onAction={onCreateRequest}
+          supporting="Say what you need and list several things you could give. A supplier only has to want one."
+        />
+        {requests.length ? (
+          requests.map(({ request, answers }) => (
+            <Card
+              key={request.id}
+              onPress={() => onOpenRequest(request.id)}
+              accessibilityLabel={`${request.needTitle}, ${answers} can answer`}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[3] }}>
+                <View style={{ flex: 1, gap: spacing[1] }}>
+                  <Text variant="heading3">{request.needTitle}</Text>
+                  <Text variant="bodySmall" tone="secondary">
+                    {request.needCategory} · needed by {request.neededBy}
+                  </Text>
+                </View>
+                <Icon name="chevronRight" size={size.icon} color={colors.text.tertiary} />
+              </View>
+              <Divider style={{ marginVertical: spacing[3] }} />
+              <Text variant="micro" tone="tertiary">You would give any one of</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2], marginTop: spacing[2] }}>
+                {request.canOffer.map((offer) => (
+                  <Chip key={offer.id} label={offer.label} />
+                ))}
+              </View>
+              <Text variant="bodySmall" tone={answers ? 'chrome' : 'tertiary'} style={{ marginTop: spacing[3] }}>
+                {answers
+                  ? `${answers} business${answers === 1 ? '' : 'es'} can answer this`
+                  : 'No answers yet'}
+              </Text>
+            </Card>
+          ))
+        ) : (
+          <EmptyState
+            title="No open requests."
+            body="Post what you need and what you could give for it. Requests reach businesses a listing on its own would not."
+            actionLabel="Post a request"
+            onAction={onCreateRequest}
+          />
+        )}
+      </View>
 
       <View style={{ marginTop: rhythm.sectionToSection, gap: spacing[3] }}>
         <SectionHeader title="What you have on the table" action="Add" onAction={onCreateListing} />

@@ -4,12 +4,14 @@ import {
   businesses,
   me,
   mySwapListings,
+  mySwapRequests,
   swapListings,
   type BusinessProfileData,
   type SwapKind,
   type SwapLeg,
   type SwapListing,
   type SwapMatch,
+  type SwapRequest,
 } from './mock';
 
 /**
@@ -206,8 +208,82 @@ export function findSwapChains(profile?: BusinessProfileData | null): SwapMatch[
   return chains.sort((a, b) => quality(b.match) - quality(a.match)).slice(0, maxChains);
 }
 
+/**
+ * Who can answer a procurement request. Two conditions, same as a direct swap:
+ * they can cover the need, and they want at least one of the several things the
+ * request put on the table. Any one offer closing the deal is the point — it is
+ * why a request reaches businesses a single listing never would.
+ */
+export function findRequestSwaps(request: SwapRequest, profile?: BusinessProfileData | null): SwapMatch[] {
+  const mine = myParty(profile);
+
+  return counterparties()
+    .flatMap((party) => {
+      const listing = party.listings.find(
+        (item) =>
+          containsTerm(item.category, request.needCategory) || containsTerm(item.title, request.needCategory),
+      );
+      if (!listing) return [];
+
+      // The first offer they want closes it. A plain loop, because a `find`
+      // that also assigns its reason out of scope is a trap for the next edit.
+      let offer: SwapRequest['canOffer'][number] | undefined;
+      let wanted: string | undefined;
+      for (const candidate of request.canOffer) {
+        const hit = party.wants.find((want) => containsTerm(candidate.label, want));
+        if (hit) {
+          offer = candidate;
+          wanted = hit;
+          break;
+        }
+      }
+      if (!offer || !wanted) return [];
+
+      const sameCity = containsTerm(party.city, mine.city);
+      const trusted = party.trust === 'verified' || party.trust === 'proven';
+      const reasons = [
+        `They can cover your ${lower(request.needCategory)} requirement`,
+        `They want ${lower(wanted)} — one of the things you offered instead of cash`,
+        sameCity ? `Both in ${mine.city}` : `${party.city} — outside your city`,
+      ];
+      if (trusted) reasons.push('Registration verified');
+
+      return [
+        {
+          id: `swap-request:${request.id}:${party.id}`,
+          kind: 'direct' as const,
+          swapKind: listing.kind,
+          legs: [
+            {
+              fromId: mine.id,
+              toId: party.id,
+              gives: offer.label,
+              kind: offer.kind,
+              indicativeValue: offer.indicativeValue,
+            },
+            {
+              fromId: party.id,
+              toId: mine.id,
+              gives: listing.title,
+              kind: listing.kind,
+              indicativeValue: listing.indicativeValue,
+              listingId: listing.id,
+            },
+          ],
+          reasons,
+          match: sameCity && trusted ? 'strong' : sameCity ? 'good' : 'potential',
+        } satisfies SwapMatch,
+      ];
+    })
+    .sort((a, b) => quality(b.match) - quality(a.match));
+}
+
 export function findSwapMatches(profile?: BusinessProfileData | null): SwapMatch[] {
-  return [...findDirectSwaps(profile), ...findSwapChains(profile)];
+  return [
+    ...findDirectSwaps(profile),
+    ...findSwapChains(profile),
+    ...mySwapRequests.flatMap((request) => findRequestSwaps(request, profile)),
+  ];
 }
 
 export function findSwapMatch(id: string, profile?: BusinessProfileData | null): SwapMatch | undefined {

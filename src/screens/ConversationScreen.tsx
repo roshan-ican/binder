@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, ScrollView, TextInput, View } from 'react-native';
 import { ActionRow, BackHeader, Button, Divider, Icon, IconButton, Screen, Text, TrustBadge } from '../components';
-import { conversations, jobSeekerConversations, type UserRole } from '../data/mock';
+import { conversations, jobSeekerConversations, swapConversationFor, type UserRole } from '../data/mock';
 import { colors, radius, size, spacing, typography } from '../theme';
 
 /**
@@ -22,7 +22,8 @@ export function ConversationScreen({
   onDetails?: (name: string) => void;
 }) {
   const inbox = role === 'job-seeker' ? jobSeekerConversations : conversations;
-  const conversation = inbox.find((item) => item.id === conversationId) ?? inbox[0];
+  const conversation =
+    inbox.find((item) => item.id === conversationId) ?? swapConversationFor(conversationId) ?? inbox[0];
   const [draft, setDraft] = useState('');
   const [messages, setMessages] = useState(conversation.messages);
   const [attachmentOpen, setAttachmentOpen] = useState(false);

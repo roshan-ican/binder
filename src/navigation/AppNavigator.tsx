@@ -21,6 +21,7 @@ import { SearchResultsScreen } from '../screens/SearchResultsScreen';
 import { WelcomeScreen } from '../screens/WelcomeScreen';
 import { EnquiryFlowScreen } from '../screens/EnquiryFlowScreen';
 import { SwapFlowScreen } from '../screens/SwapFlowScreen';
+import { SwapRequestDetailScreen, SwapRequestScreen } from '../screens/SwapRequestScreen';
 import { SwapMatchScreen } from '../screens/SwapMatchScreen';
 import { BusinessDocumentsScreen, BusinessProfileEditorScreen, SavedBusinessesScreen, TeamScreen } from '../screens/BusinessManagementScreens';
 import { ApplicationDetailScreen, ApplyFlowScreen, CandidateDocumentsScreen, CandidateProfileEditorScreen, JobDetailScreen, SavedJobsScreen } from '../screens/JobFlowScreens';
@@ -46,6 +47,8 @@ type Route =
   | { name: 'enquiry-compose'; mode: 'create' | 'edit' }
   | { name: 'swap-match'; id: string }
   | { name: 'swap-compose'; mode: 'create' | 'edit' }
+  | { name: 'swap-request'; id: string }
+  | { name: 'swap-request-compose'; mode: 'create' | 'edit' }
   | { name: 'saved-businesses' }
   | { name: 'business-profile-edit' }
   | { name: 'business-profile-preview' }
@@ -225,11 +228,32 @@ export function AppNavigator() {
             profile={businessProfile}
             onBack={pop}
             onOpenBusiness={(id) => push({ name: 'business', id })}
-            onPropose={() => runTrustAction(() => push({ name: 'conversation', id: 'swap-lens-forty-two' }))}
+            onPropose={(partyId) =>
+              runTrustAction(() =>
+                push({
+                  name: 'conversation',
+                  // The existing photographer thread when there is one, otherwise
+                  // a fresh thread with whoever the swap is actually with.
+                  id: partyId === 'lens-forty-two' ? 'swap-lens-forty-two' : `swap:${partyId}`,
+                }),
+              )
+            }
           />
         );
       case 'swap-compose':
         return <SwapFlowScreen mode={route.mode} onBack={pop} onDone={() => { setTab('match'); reset({ name: 'tabs' }); }} />;
+      case 'swap-request':
+        return (
+          <SwapRequestDetailScreen
+            requestId={route.id}
+            profile={businessProfile}
+            onBack={pop}
+            onOpenMatch={(id) => push({ name: 'swap-match', id })}
+            onEdit={() => push({ name: 'swap-request-compose', mode: 'edit' })}
+          />
+        );
+      case 'swap-request-compose':
+        return <SwapRequestScreen mode={route.mode} onBack={pop} onDone={() => { setTab('match'); reset({ name: 'tabs' }); }} />;
       case 'saved-businesses':
         return <SavedBusinessesScreen onBack={pop} onOpenBusiness={(id) => push({ name: 'business', id })} />;
       case 'business-profile-edit':
@@ -309,6 +333,8 @@ export function AppNavigator() {
             onSwapOpenChange={setSwapOpen}
             onOpenSwapMatch={(id) => push({ name: 'swap-match', id })}
             onCreateSwapListing={() => runTrustAction(() => push({ name: 'swap-compose', mode: 'create' }))}
+            onOpenSwapRequest={(id) => push({ name: 'swap-request', id })}
+            onCreateSwapRequest={() => runTrustAction(() => push({ name: 'swap-request-compose', mode: 'create' }))}
           />
         );
     }
@@ -391,6 +417,8 @@ function TabScreen({
   onSwapOpenChange,
   onOpenSwapMatch,
   onCreateSwapListing,
+  onOpenSwapRequest,
+  onCreateSwapRequest,
 }: {
   tab: TabKey;
   role: UserRole;
@@ -419,10 +447,12 @@ function TabScreen({
   onSwapOpenChange: (value: boolean) => void;
   onOpenSwapMatch: (id: string) => void;
   onCreateSwapListing: () => void;
+  onOpenSwapRequest: (id: string) => void;
+  onCreateSwapRequest: () => void;
 }) {
   switch (tab) {
     case 'match':
-      return <MatchScreen role={role} businessProfile={businessProfile} jobSeekerProfile={jobSeekerProfile} businessSwipeCreditsUsed={businessSwipeCreditsUsed} jobSwipeCreditsUsed={jobSwipeCreditsUsed} onBusinessDecision={onBusinessDecision} onJobSwipe={onJobSwipe} onOpenBusiness={onOpenBusiness} onOpenEnquiry={onOpenEnquiry} onOpenJob={onOpenJob} swapOpen={swapOpen} onSwapOpenChange={onSwapOpenChange} onOpenSwapMatch={onOpenSwapMatch} onCreateSwapListing={onCreateSwapListing} onEditSwapProfile={onEditProfile} onOpenConversation={onOpenConversation} />;
+      return <MatchScreen role={role} businessProfile={businessProfile} jobSeekerProfile={jobSeekerProfile} businessSwipeCreditsUsed={businessSwipeCreditsUsed} jobSwipeCreditsUsed={jobSwipeCreditsUsed} onBusinessDecision={onBusinessDecision} onJobSwipe={onJobSwipe} onOpenBusiness={onOpenBusiness} onOpenEnquiry={onOpenEnquiry} onOpenJob={onOpenJob} swapOpen={swapOpen} onSwapOpenChange={onSwapOpenChange} onOpenSwapMatch={onOpenSwapMatch} onCreateSwapListing={onCreateSwapListing} onEditSwapProfile={onEditProfile} onOpenConversation={onOpenConversation} onOpenSwapRequest={onOpenSwapRequest} onCreateSwapRequest={onCreateSwapRequest} />;
     case 'enquiries':
       return <EnquiriesScreen role={role} onOpenEnquiry={onOpenEnquiry} onCreateEnquiry={onCreateEnquiry} onOpenJob={onOpenJob} onOpenApplication={onOpenApplication} />;
     case 'inbox':

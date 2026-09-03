@@ -656,6 +656,36 @@ export const conversations: Conversation[] = [
   },
 ];
 
+/**
+ * A thread for a swap that has just been proposed. Proposing opens the
+ * conversation with the actual counterparty rather than dropping you into
+ * whichever thread happens to exist, and the opening message states the terms
+ * so neither side has to ask what was agreed.
+ */
+export function swapConversationFor(conversationId: string): Conversation | undefined {
+  const businessId = conversationId.startsWith('swap:') ? conversationId.slice(5) : undefined;
+  if (!businessId) return undefined;
+  const business = businesses.find((item) => item.id === businessId);
+  if (!business) return undefined;
+
+  return {
+    id: conversationId,
+    business: business.name,
+    preview: 'Swap proposed',
+    time: 'Now',
+    unread: false,
+    context: 'Swap proposal',
+    messages: [
+      {
+        id: '1',
+        from: 'me',
+        body: 'Proposing a swap through Binder. Happy to talk through the detail and settle the terms here.',
+        time: 'Now',
+      },
+    ],
+  };
+}
+
 export const jobSeekerConversations: Conversation[] = [
   {
     id: 'job-abc-leather',
@@ -778,6 +808,32 @@ export type SwapMatch = {
   legs: SwapLeg[];
   reasons: string[];
   match: MatchQuality;
+};
+
+/** One of the things a request is willing to give instead of cash. */
+export type SwapRequestOffer = {
+  id: string;
+  kind: SwapKind;
+  label: string;
+  indicativeValue: string;
+};
+
+/**
+ * B2B procurement — the mirror of a listing. A listing says "here is what I
+ * have". A request says "here is what I need, and here are several things I
+ * could give for it". Any one of the offers can close the deal, which is what
+ * makes this more than a barter board.
+ */
+export type SwapRequest = {
+  id: string;
+  businessId: string;
+  needCategory: string;
+  needTitle: string;
+  needDescription: string;
+  needValue: string;
+  canOffer: SwapRequestOffer[];
+  status: 'draft' | 'active' | 'closed' | 'expired';
+  neededBy: string;
 };
 
 export type SwapProposal = {
@@ -983,3 +1039,37 @@ export const swapProposals: SwapProposal[] = [
     updated: 'Not sent yet',
   },
 ];
+
+export const mySwapRequests: SwapRequest[] = [
+  {
+    id: 'req-packaging',
+    businessId: me.id,
+    needCategory: 'Packaging',
+    needTitle: '₹1 lakh of packaging',
+    needDescription:
+      'Printed rigid garment boxes and mailers for the winter drop. Four-colour lid, recycled board, pre-production sample required.',
+    needValue: '₹1,00,000',
+    canOffer: [
+      { id: 'req-packaging-goods', kind: 'product', label: 'Leather goods', indicativeValue: '₹1,00,000 retail value' },
+      { id: 'req-packaging-ads', kind: 'promotion', label: 'Advertising & promotion', indicativeValue: '14,000 reach' },
+      { id: 'req-packaging-capacity', kind: 'capacity', label: 'Manufacturing capacity', indicativeValue: '₹1,00,000 value' },
+    ],
+    status: 'active',
+    neededBy: '18 Oct 2026',
+  },
+  {
+    id: 'req-printing',
+    businessId: me.id,
+    needCategory: 'Printing',
+    needTitle: '₹40,000 of garment printing',
+    needDescription: 'Screen printing on 2,000 blanks for the co-branded run. We supply the garments.',
+    needValue: '₹40,000',
+    canOffer: [
+      { id: 'req-printing-blanks', kind: 'product', label: 'Blank garments from our line', indicativeValue: '₹40,000 value' },
+      { id: 'req-printing-ads', kind: 'promotion', label: 'Advertising & promotion', indicativeValue: '14,000 reach' },
+    ],
+    status: 'active',
+    neededBy: '02 Nov 2026',
+  },
+];
+

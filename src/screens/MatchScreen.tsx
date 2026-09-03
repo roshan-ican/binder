@@ -36,6 +36,8 @@ export function MatchScreen({
   onCreateSwapListing,
   onEditSwapProfile,
   onOpenConversation,
+  onOpenSwapRequest,
+  onCreateSwapRequest,
 }: {
   role: UserRole;
   businessProfile: BusinessProfileData | null;
@@ -53,6 +55,8 @@ export function MatchScreen({
   onCreateSwapListing: () => void;
   onEditSwapProfile: () => void;
   onOpenConversation: (id: string) => void;
+  onOpenSwapRequest: (id: string) => void;
+  onCreateSwapRequest: () => void;
 }) {
   const insets = useSafeAreaInsets();
   const [mode, setMode] = useState<MatchMode>('matches');
@@ -104,6 +108,8 @@ export function MatchScreen({
           onCreateListing={onCreateSwapListing}
           onEditSwapProfile={onEditSwapProfile}
           onOpenConversation={onOpenConversation}
+          onOpenRequest={onOpenSwapRequest}
+          onCreateRequest={onCreateSwapRequest}
         />
       )}
     </View>

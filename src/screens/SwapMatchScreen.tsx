@@ -31,7 +31,8 @@ export function SwapMatchScreen({
   profile: BusinessProfileData | null;
   onBack: () => void;
   onOpenBusiness: (id: string) => void;
-  onPropose: () => void;
+  /** Receives the business the proposal goes to — the first hop of the loop. */
+  onPropose: (partyId: string) => void;
 }) {
   const match = findSwapMatch(matchId, profile);
   const summary = match ? describeSwap(match, profile) : undefined;
@@ -57,7 +58,12 @@ export function SwapMatchScreen({
       footer={
         <View style={{ flexDirection: 'row', gap: spacing[3] }}>
           <Button label="Save" variant="secondary" fullWidth={false} style={{ flex: 1 }} />
-          <Button label="Propose swap" onPress={onPropose} fullWidth={false} style={{ flex: 2 }} />
+          <Button
+            label="Propose swap"
+            onPress={() => onPropose(summary.others[0]?.id ?? '')}
+            fullWidth={false}
+            style={{ flex: 2 }}
+          />
         </View>
       }
     >
