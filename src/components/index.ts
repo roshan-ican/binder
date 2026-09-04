@@ -27,3 +27,4 @@ export { BusinessMatchDeck, type BusinessMatchItem } from './BusinessMatchDeck';
 export { BusinessTrustGate } from './BusinessTrustGate';
 export { BusinessIndustryPicker } from './BusinessIndustryPicker';
 export { ActionRow, ConfirmSheet, DetailRow, RuledSection, StatusNotice, ToggleRow } from './FlowUI';
+export { SwapCard, SwapChainCard, type SwapCardProps } from './SwapCard';

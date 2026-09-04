@@ -38,7 +38,9 @@ export function SearchResultsScreen({
   onOpenBusiness: (id: string) => void;
   loading?: boolean;
 }) {
-  const isJobSeeker = role === 'job-seeker';
+  // Job-seeker path disabled — Binder is business-only for now.
+  // const isJobSeeker = role === 'job-seeker';
+  const isJobSeeker = false;
   const [tab, setTab] = useState<ResultTab>(isJobSeeker ? 'jobs' : 'profiles');
   const [cityOnly, setCityOnly] = useState(true);
   const [verifiedOnly, setVerifiedOnly] = useState(false);

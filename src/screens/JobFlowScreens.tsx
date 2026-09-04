@@ -1,3 +1,4 @@
+// Disabled: job-seeker role removed from navigation. Kept for potential future re-enable.
 import { useState } from 'react';
 import { View } from 'react-native';
 import { BackHeader, Button, Card, Chip, ConfirmSheet, DetailRow, Divider, EmptyState, Icon, Input, Logo, Screen, ScreenHeading, SectionHeader, StatusNotice, Text, TextButton, TrustBadge } from '../components';

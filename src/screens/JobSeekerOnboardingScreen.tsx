@@ -1,3 +1,4 @@
+// Disabled: job-seeker role removed from navigation. Kept for potential future re-enable.
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { Controller, useForm } from 'react-hook-form';

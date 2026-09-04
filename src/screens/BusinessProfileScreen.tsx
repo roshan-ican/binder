@@ -9,10 +9,12 @@ import {
   MatchLabel,
   Screen,
   SectionHeader,
+  SwapCard,
   Text,
   TrustBadge,
 } from '../components';
 import { businesses } from '../data/mock';
+import { swapListings } from '../data/swaps';
 import { colors, rhythm, size, spacing } from '../theme';
 
 /**
@@ -23,12 +25,15 @@ export function BusinessProfileScreen({
   businessId,
   onBack,
   onConnect,
+  onOpenSwap,
 }: {
   businessId: string;
   onBack: () => void;
   onConnect: (id: string) => void;
+  onOpenSwap?: (id: string) => void;
 }) {
   const business = businesses.find((item) => item.id === businessId) ?? businesses[0];
+  const activeSwapListings = swapListings.filter((listing) => listing.businessId === business.id && listing.status === 'active');
 
   return (
     <Screen
@@ -99,6 +104,19 @@ export function BusinessProfileScreen({
           ))}
         </View>
       </View>
+
+      {activeSwapListings.length > 0 ? (
+        <View style={{ marginTop: spacing[6], gap: spacing[3] }}>
+          <SectionHeader
+            title="Swaps"
+            action={activeSwapListings.length > 2 ? 'View all' : undefined}
+            onAction={() => onOpenSwap?.(activeSwapListings[0].id)}
+          />
+          {activeSwapListings.slice(0, 2).map((listing) => (
+            <SwapCard key={listing.id} kind="listing" listing={listing} onPress={() => onOpenSwap?.(listing.id)} />
+          ))}
+        </View>
+      ) : null}
 
       <View style={{ marginTop: spacing[6], gap: spacing[3] }}>
         <SectionHeader title="Capabilities" />

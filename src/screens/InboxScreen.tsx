@@ -21,8 +21,11 @@ export function InboxScreen({
   onOpenConversation: (id: string) => void;
 }) {
   const [tab, setTab] = useState<'messages' | 'requests'>('messages');
-  const isJobSeeker = role === 'job-seeker';
-  const inbox = isJobSeeker ? jobSeekerConversations : conversations;
+  // Job-seeker path disabled — Binder is business-only for now.
+  // const isJobSeeker = role === 'job-seeker';
+  // const inbox = isJobSeeker ? jobSeekerConversations : conversations;
+  const isJobSeeker = false;
+  const inbox = conversations;
 
   return (
     <Screen>

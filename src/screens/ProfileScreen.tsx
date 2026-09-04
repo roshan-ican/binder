@@ -31,6 +31,7 @@ export function ProfileScreen({
   onEditProfile,
   onPreviewProfile,
   onManage,
+  onManageSwaps,
 }: {
   role: UserRole;
   businessProfile?: BusinessProfileData | null;
@@ -39,8 +40,11 @@ export function ProfileScreen({
   onEditProfile?: () => void;
   onPreviewProfile?: () => void;
   onManage?: () => void;
+  onManageSwaps?: () => void;
 }) {
-  const isJobSeeker = role === "job-seeker";
+  // Job-seeker path disabled — Binder is business-only for now.
+  // const isJobSeeker = role === "job-seeker";
+  const isJobSeeker = false;
   const profileName = isJobSeeker
     ? (jobSeekerProfile?.fullName ?? candidate.person)
     : (businessProfile?.businessName ?? me.business);
@@ -233,6 +237,7 @@ export function ProfileScreen({
               { label: "Saved businesses", onPress: onManage },
               { label: "Documents & catalogue", onPress: onManage },
               { label: "Team members", onPress: onManage },
+              { label: "My swap listings", onPress: onManageSwaps },
               { label: "Saved searches & alerts", onPress: onManage },
               { label: "Notification preferences", onPress: onManage },
               { label: "Account & privacy", onPress: onManage },

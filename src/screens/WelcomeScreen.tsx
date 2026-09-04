@@ -41,10 +41,11 @@ export function WelcomeScreen({
               label="I am a business"
               onPress={() => onSelectRole("business")}
             />
+            {/* Job-seeker path disabled — Binder is business-only for now.
             <Button
               label="I am a job seeker"
               onPress={() => onSelectRole("job-seeker")}
-            />
+            /> */}
             <TextButton label="Already have an account? Sign in" onPress={onSignIn} tone="chrome" />
             {/* <View style={{ alignItems: 'center', paddingTop: spacing[2] }}>
               <TextButton label="Look around first" onPress={onExplore} tone="secondary" />

@@ -13,15 +13,20 @@ import { DiscoverScreen } from '../screens/DiscoverScreen';
 import { EnquiriesScreen } from '../screens/EnquiriesScreen';
 import { EnquiryDetailScreen } from '../screens/EnquiryDetailScreen';
 import { InboxScreen } from '../screens/InboxScreen';
-import { JobSeekerOnboardingScreen } from '../screens/JobSeekerOnboardingScreen';
+// Job-seeker-only screen disabled — Binder is business-only for now.
+// import { JobSeekerOnboardingScreen } from '../screens/JobSeekerOnboardingScreen';
 import { MatchScreen } from '../screens/MatchScreen';
 import { OpportunitiesScreen } from '../screens/OpportunitiesScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { SearchResultsScreen } from '../screens/SearchResultsScreen';
 import { WelcomeScreen } from '../screens/WelcomeScreen';
 import { EnquiryFlowScreen } from '../screens/EnquiryFlowScreen';
+import { SwapDetailScreen } from '../screens/SwapDetailScreen';
+import { SwapListingFlowScreen } from '../screens/SwapListingFlowScreen';
+import { SwapsScreen } from '../screens/SwapsScreen';
 import { BusinessDocumentsScreen, BusinessProfileEditorScreen, SavedBusinessesScreen, TeamScreen } from '../screens/BusinessManagementScreens';
-import { ApplicationDetailScreen, ApplyFlowScreen, CandidateDocumentsScreen, CandidateProfileEditorScreen, JobDetailScreen, SavedJobsScreen } from '../screens/JobFlowScreens';
+// Job-seeker-only screens disabled — Binder is business-only for now.
+// import { ApplicationDetailScreen, ApplyFlowScreen, CandidateDocumentsScreen, CandidateProfileEditorScreen, JobDetailScreen, SavedJobsScreen } from '../screens/JobFlowScreens';
 import { AccountPrivacyScreen, ConversationDetailsScreen, NotificationPreferencesScreen, SavedSearchesScreen, SettingsHubScreen, SignInScreen, StateGalleryScreen } from '../screens/SharedScreens';
 
 /**
@@ -33,7 +38,8 @@ type Route =
   | { name: 'welcome' }
   | { name: 'business-onboarding' }
   | { name: 'business-verification'; source: 'onboarding' | 'gate' | 'profile' }
-  | { name: 'job-seeker-onboarding' }
+  // Job-seeker-only routes disabled — Binder is business-only for now.
+  // | { name: 'job-seeker-onboarding' }
   | { name: 'tabs' }
   | { name: 'search' }
   | { name: 'business'; id: string }
@@ -42,18 +48,21 @@ type Route =
   | { name: 'conversation'; id: string }
   | { name: 'sign-in' }
   | { name: 'enquiry-compose'; mode: 'create' | 'edit' }
+  | { name: 'swap'; id: string }
+  | { name: 'swap-compose'; mode: 'create' | 'edit' }
   | { name: 'saved-businesses' }
   | { name: 'business-profile-edit' }
   | { name: 'business-profile-preview' }
   | { name: 'business-documents' }
   | { name: 'team' }
-  | { name: 'job'; id: string }
-  | { name: 'apply'; id: string }
-  | { name: 'saved-jobs' }
-  | { name: 'application' }
-  | { name: 'candidate-profile-edit' }
-  | { name: 'candidate-profile-preview' }
-  | { name: 'candidate-documents' }
+  // Job-seeker-only routes disabled — Binder is business-only for now.
+  // | { name: 'job'; id: string }
+  // | { name: 'apply'; id: string }
+  // | { name: 'saved-jobs' }
+  // | { name: 'application' }
+  // | { name: 'candidate-profile-edit' }
+  // | { name: 'candidate-profile-preview' }
+  // | { name: 'candidate-documents' }
   | { name: 'settings' }
   | { name: 'saved-searches' }
   | { name: 'notifications' }
@@ -126,7 +135,9 @@ export function AppNavigator() {
       <WelcomeScreen
         onSelectRole={(nextRole) => {
           setRole(nextRole);
-          reset({ name: nextRole === 'business' ? 'business-onboarding' : 'job-seeker-onboarding' });
+          // Job-seeker path disabled — Binder is business-only for now.
+          // reset({ name: nextRole === 'business' ? 'business-onboarding' : 'job-seeker-onboarding' });
+          reset({ name: 'business-onboarding' });
         }}
         onExplore={() => { setTab('discover'); reset({ name: 'tabs' }); }}
         onSignIn={() => push({ name: 'sign-in' })}
@@ -163,18 +174,19 @@ export function AppNavigator() {
     );
   }
 
-  if (route.name === 'job-seeker-onboarding') {
-    return (
-      <JobSeekerOnboardingScreen
-        onComplete={setJobSeekerProfile}
-        onExplore={() => {
-          persistSession('job-seeker');
-          setTab('match');
-          reset({ name: 'tabs' });
-        }}
-      />
-    );
-  }
+  // Job-seeker path disabled — Binder is business-only for now.
+  // if (route.name === 'job-seeker-onboarding') {
+  //   return (
+  //     <JobSeekerOnboardingScreen
+  //       onComplete={setJobSeekerProfile}
+  //       onExplore={() => {
+  //         persistSession('job-seeker');
+  //         setTab('match');
+  //         reset({ name: 'tabs' });
+  //       }}
+  //     />
+  //   );
+  // }
 
   const screen = (() => {
     switch (route.name) {
@@ -194,6 +206,7 @@ export function AppNavigator() {
             businessId={route.id}
             onBack={pop}
             onConnect={() => runTrustAction(() => push({ name: 'conversation', id: 'abc-leather' }))}
+            onOpenSwap={(id) => push({ name: 'swap', id })}
           />
         );
       case 'enquiry':
@@ -213,6 +226,17 @@ export function AppNavigator() {
         return <ConversationDetailsScreen name={route.member} onBack={pop} />;
       case 'enquiry-compose':
         return <EnquiryFlowScreen mode={route.mode} onBack={pop} onDone={() => { setTab('enquiries'); reset({ name: 'tabs' }); }} />;
+      case 'swap':
+        return (
+          <SwapDetailScreen
+            id={route.id}
+            onBack={pop}
+            onPropose={(conversationId) => runTrustAction(() => push({ name: 'conversation', id: conversationId }))}
+            onEdit={() => push({ name: 'swap-compose', mode: 'edit' })}
+          />
+        );
+      case 'swap-compose':
+        return <SwapListingFlowScreen mode={route.mode} onBack={pop} onDone={() => { setTab('swaps'); reset({ name: 'tabs' }); }} />;
       case 'saved-businesses':
         return <SavedBusinessesScreen onBack={pop} onOpenBusiness={(id) => push({ name: 'business', id })} />;
       case 'business-profile-edit':
@@ -223,24 +247,28 @@ export function AppNavigator() {
         return <BusinessDocumentsScreen onBack={pop} />;
       case 'team':
         return <TeamScreen onBack={pop} />;
-      case 'job':
-        return <JobDetailScreen jobId={route.id} onBack={pop} onApply={(id) => push({ name: 'apply', id })} />;
-      case 'apply':
-        return <ApplyFlowScreen jobId={route.id} onBack={pop} onDone={() => push({ name: 'application' })} />;
-      case 'saved-jobs':
-        return <SavedJobsScreen onBack={pop} onOpenJob={(id) => push({ name: 'job', id })} />;
-      case 'application':
-        return <ApplicationDetailScreen onBack={pop} onOpenConversation={() => push({ name: 'conversation', id: 'job-abc-leather' })} />;
-      case 'candidate-profile-edit':
-        return <CandidateProfileEditorScreen profile={jobSeekerProfile} onBack={pop} onPreview={() => push({ name: 'candidate-profile-preview' })} onSave={(profile) => { setJobSeekerProfile(profile); pop(); }} />;
-      case 'candidate-profile-preview':
-        return <CandidateProfileEditorScreen profile={jobSeekerProfile} previewOnly onBack={pop} />;
-      case 'candidate-documents':
-        return <CandidateDocumentsScreen onBack={pop} />;
+      // Job-seeker-only routes disabled — Binder is business-only for now.
+      // case 'job':
+      //   return <JobDetailScreen jobId={route.id} onBack={pop} onApply={(id) => push({ name: 'apply', id })} />;
+      // case 'apply':
+      //   return <ApplyFlowScreen jobId={route.id} onBack={pop} onDone={() => push({ name: 'application' })} />;
+      // case 'saved-jobs':
+      //   return <SavedJobsScreen onBack={pop} onOpenJob={(id) => push({ name: 'job', id })} />;
+      // case 'application':
+      //   return <ApplicationDetailScreen onBack={pop} onOpenConversation={() => push({ name: 'conversation', id: 'job-abc-leather' })} />;
+      // case 'candidate-profile-edit':
+      //   return <CandidateProfileEditorScreen profile={jobSeekerProfile} onBack={pop} onPreview={() => push({ name: 'candidate-profile-preview' })} onSave={(profile) => { setJobSeekerProfile(profile); pop(); }} />;
+      // case 'candidate-profile-preview':
+      //   return <CandidateProfileEditorScreen profile={jobSeekerProfile} previewOnly onBack={pop} />;
+      // case 'candidate-documents':
+      //   return <CandidateDocumentsScreen onBack={pop} />;
       case 'settings':
         return <SettingsHubScreen role={role} onBack={pop} onOpen={(key) => {
-          if (key === 'saved') push({ name: role === 'business' ? 'saved-businesses' : 'saved-jobs' });
-          else if (key === 'documents') push({ name: role === 'business' ? 'business-documents' : 'candidate-documents' });
+          // Job-seeker branches disabled — Binder is business-only for now.
+          // if (key === 'saved') push({ name: role === 'business' ? 'saved-businesses' : 'saved-jobs' });
+          // else if (key === 'documents') push({ name: role === 'business' ? 'business-documents' : 'candidate-documents' });
+          if (key === 'saved') push({ name: 'saved-businesses' });
+          else if (key === 'documents') push({ name: 'business-documents' });
           else if (key === 'team') push({ name: 'team' });
           else if (key === 'searches') push({ name: 'saved-searches' });
           else if (key === 'notifications') push({ name: 'notifications' });
@@ -268,10 +296,18 @@ export function AppNavigator() {
             onOpenOpportunities={() => push({ name: 'opportunities' })}
             onOpenConversation={(id) => push({ name: 'conversation', id })}
             onCreateEnquiry={() => runTrustAction(() => push({ name: 'enquiry-compose', mode: 'create' }))}
-            onOpenJob={(id) => push({ name: 'job', id })}
-            onOpenApplication={() => push({ name: 'application' })}
-            onEditProfile={() => push({ name: role === 'business' ? 'business-profile-edit' : 'candidate-profile-edit' })}
-            onPreviewProfile={() => push({ name: role === 'business' ? 'business-profile-preview' : 'candidate-profile-preview' })}
+            onOpenSwap={(id) => push({ name: 'swap', id })}
+            onCreateSwap={() => runTrustAction(() => push({ name: 'swap-compose', mode: 'create' }))}
+            onManageSwaps={() => { setTab('swaps'); reset({ name: 'tabs' }); }}
+            // Job-seeker routes disabled — Binder is business-only for now.
+            // onOpenJob={(id) => push({ name: 'job', id })}
+            // onOpenApplication={() => push({ name: 'application' })}
+            onOpenJob={() => {}}
+            onOpenApplication={() => {}}
+            // onEditProfile={() => push({ name: role === 'business' ? 'business-profile-edit' : 'candidate-profile-edit' })}
+            // onPreviewProfile={() => push({ name: role === 'business' ? 'business-profile-preview' : 'candidate-profile-preview' })}
+            onEditProfile={() => push({ name: 'business-profile-edit' })}
+            onPreviewProfile={() => push({ name: 'business-profile-preview' })}
             onManage={() => push({ name: 'settings' })}
             businessProfile={businessProfile}
             jobSeekerProfile={jobSeekerProfile}
@@ -353,6 +389,9 @@ function TabScreen({
   onOpenOpportunities,
   onOpenConversation,
   onCreateEnquiry,
+  onOpenSwap,
+  onCreateSwap,
+  onManageSwaps,
   onOpenJob,
   onOpenApplication,
   onEditProfile,
@@ -377,6 +416,9 @@ function TabScreen({
   onOpenOpportunities: () => void;
   onOpenConversation: (id: string) => void;
   onCreateEnquiry: () => void;
+  onOpenSwap: (id: string) => void;
+  onCreateSwap: () => void;
+  onManageSwaps: () => void;
   onOpenJob: (id: string) => void;
   onOpenApplication: () => void;
   onEditProfile: () => void;
@@ -396,10 +438,12 @@ function TabScreen({
       return <MatchScreen role={role} businessProfile={businessProfile} jobSeekerProfile={jobSeekerProfile} businessSwipeCreditsUsed={businessSwipeCreditsUsed} jobSwipeCreditsUsed={jobSwipeCreditsUsed} onBusinessDecision={onBusinessDecision} onJobSwipe={onJobSwipe} onOpenBusiness={onOpenBusiness} onOpenEnquiry={onOpenEnquiry} onOpenJob={onOpenJob} />;
     case 'enquiries':
       return <EnquiriesScreen role={role} onOpenEnquiry={onOpenEnquiry} onCreateEnquiry={onCreateEnquiry} onOpenJob={onOpenJob} onOpenApplication={onOpenApplication} />;
+    case 'swaps':
+      return <SwapsScreen onOpenSwap={onOpenSwap} onCreateSwap={onCreateSwap} />;
     case 'inbox':
       return <InboxScreen role={role} onOpenConversation={onOpenConversation} />;
     case 'profile':
-      return <ProfileScreen role={role} businessProfile={businessProfile} jobSeekerProfile={jobSeekerProfile} onVerifyBusiness={onVerifyBusiness} onEditProfile={onEditProfile} onPreviewProfile={onPreviewProfile} onManage={onManage} />;
+      return <ProfileScreen role={role} businessProfile={businessProfile} jobSeekerProfile={jobSeekerProfile} onVerifyBusiness={onVerifyBusiness} onEditProfile={onEditProfile} onPreviewProfile={onPreviewProfile} onManage={onManage} onManageSwaps={onManageSwaps} />;
     case 'discover':
     default:
       return (

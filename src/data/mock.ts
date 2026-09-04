@@ -436,6 +436,18 @@ export const conversations: Conversation[] = [
       { id: '2', from: 'me', body: 'Received. We need a 4-colour print on the lid.', time: 'Yesterday' },
     ],
   },
+  {
+    id: 'shakti-logistics',
+    business: 'Shakti Logistics',
+    preview: 'Happy to swap freight capacity for your warehouse slot.',
+    time: '3h',
+    unread: false,
+    context: 'Swap: warehouse space for freight capacity',
+    messages: [
+      { id: '1', from: 'them', body: 'Happy to swap freight capacity for your warehouse slot. Twice weekly on the Delhi route works for us.', time: 'Yesterday' },
+      { id: '2', from: 'me', body: 'Good. Let us confirm volumes and we can start next week.', time: 'Yesterday' },
+    ],
+  },
 ];
 
 export const jobSeekerConversations: Conversation[] = [

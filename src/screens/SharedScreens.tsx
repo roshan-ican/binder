@@ -79,11 +79,12 @@ export function SignInScreen({
                   selected={role === "business"}
                   onPress={() => setRole("business")}
                 />
+                {/* Job-seeker path disabled — Binder is business-only for now.
                 <Chip
                   label="Job seeker"
                   selected={role === "job-seeker"}
                   onPress={() => setRole("job-seeker")}
-                />
+                /> */}
               </View>
             </View>
           </>

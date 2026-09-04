@@ -1,5 +1,5 @@
 import {
-  ArrowLeft, ArrowRight, BadgeCheck, Bell, Bookmark, Building2, Camera, Check, ChevronRight, FileText,
+  ArrowLeft, ArrowLeftRight, ArrowRight, BadgeCheck, Bell, Bookmark, Building2, Camera, Check, ChevronRight, FileText,
   Filter, MapPin, MessageCircle, MoreHorizontal, Package, Plus, Search, Settings,
   ShieldCheck, SlidersHorizontal, Star, Truck, Upload, Users, X, Factory,
   type LucideIcon,
@@ -17,7 +17,7 @@ export const icons = {
   truck: Truck, users: Users, message: MessageCircle, bell: Bell,
   bookmark: Bookmark, close: X, check: Check, badgeCheck: BadgeCheck,
   shield: ShieldCheck, document: FileText, star: Star, more: MoreHorizontal,
-  settings: Settings, camera: Camera, upload: Upload,
+  settings: Settings, camera: Camera, upload: Upload, swap: ArrowLeftRight,
 } satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof icons;

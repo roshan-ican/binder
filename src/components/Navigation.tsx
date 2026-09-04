@@ -6,23 +6,25 @@ import { ChromeSurface } from './ChromeSurface';
 import { Icon, type IconName } from './Icon';
 import { Text } from './Text';
 
-export type TabKey = 'match' | 'discover' | 'enquiries' | 'inbox' | 'profile';
+export type TabKey = 'match' | 'discover' | 'enquiries' | 'swaps' | 'inbox' | 'profile';
 
 const businessTabs: { key: TabKey; label: string; icon: IconName }[] = [
   { key: 'match', label: 'Match', icon: 'check' },
   { key: 'discover', label: 'Discover', icon: 'search' },
   { key: 'enquiries', label: 'Enquiries', icon: 'document' },
+  { key: 'swaps', label: 'Swaps', icon: 'swap' },
   { key: 'inbox', label: 'Inbox', icon: 'message' },
   { key: 'profile', label: 'Profile', icon: 'building' },
 ];
 
-const jobSeekerTabs: { key: TabKey; label: string; icon: IconName }[] = [
-  { key: 'match', label: 'Match', icon: 'check' },
-  { key: 'discover', label: 'Jobs', icon: 'search' },
-  { key: 'enquiries', label: 'Applied', icon: 'document' },
-  { key: 'inbox', label: 'Inbox', icon: 'message' },
-  { key: 'profile', label: 'Profile', icon: 'users' },
-];
+// Job-seeker tab set disabled — Binder is business-only for now.
+// const jobSeekerTabs: { key: TabKey; label: string; icon: IconName }[] = [
+//   { key: 'match', label: 'Match', icon: 'check' },
+//   { key: 'discover', label: 'Jobs', icon: 'search' },
+//   { key: 'enquiries', label: 'Applied', icon: 'document' },
+//   { key: 'inbox', label: 'Inbox', icon: 'message' },
+//   { key: 'profile', label: 'Profile', icon: 'users' },
+// ];
 
 /** Role-aware primary tabs. No floating centre button. */
 export function BottomTabs({
@@ -36,7 +38,9 @@ export function BottomTabs({
   onChange: (key: TabKey) => void;
   bottomInset?: number;
 }) {
-  const tabs = role === 'job-seeker' ? jobSeekerTabs : businessTabs;
+  // Job-seeker tab set disabled — Binder is business-only for now.
+  // const tabs = role === 'job-seeker' ? jobSeekerTabs : businessTabs;
+  const tabs = businessTabs;
 
   return (
     <View

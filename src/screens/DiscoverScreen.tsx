@@ -91,7 +91,9 @@ export function DiscoverScreen({
   onOpenOpportunities: () => void;
   onOpenEnquiry: (id: string) => void;
 }) {
-  const isJobSeeker = role === 'job-seeker';
+  // Job-seeker path disabled — Binder is business-only for now.
+  // const isJobSeeker = role === 'job-seeker';
+  const isJobSeeker = false;
   const [businessBrowse, setBusinessBrowse] = useState<BusinessBrowseKey>('businesses');
   const [jobBrowse, setJobBrowse] = useState<JobBrowseKey>('all-jobs');
   const [location, setLocation] = useState<LocationKey>('kanpur-up');

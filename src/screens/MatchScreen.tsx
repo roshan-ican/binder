@@ -10,6 +10,7 @@ import {
   type JobSeekerProfileData,
   type UserRole,
 } from '../data/mock';
+import { keywordMatches, normalise } from '../data/matchHelpers';
 import { colors } from '../theme';
 import { rankJobs } from './DiscoverScreen';
 
@@ -38,18 +39,19 @@ export function MatchScreen({
 }) {
   const businessItems = useMemo(() => buildBusinessMatchItems(businessProfile), [businessProfile]);
 
-  if (role === 'job-seeker') {
-    return (
-      <View style={{ flex: 1, backgroundColor: colors.bg.primary }}>
-        <JobSwipeDeck
-          jobs={rankJobs(jobOpportunities, jobSeekerProfile)}
-          creditsUsed={jobSwipeCreditsUsed}
-          onDecision={onJobSwipe}
-          onOpenJob={(job) => onOpenJob(job.id)}
-        />
-      </View>
-    );
-  }
+  // Job-seeker path disabled — Binder is business-only for now.
+  // if (role === 'job-seeker') {
+  //   return (
+  //     <View style={{ flex: 1, backgroundColor: colors.bg.primary }}>
+  //       <JobSwipeDeck
+  //         jobs={rankJobs(jobOpportunities, jobSeekerProfile)}
+  //         creditsUsed={jobSwipeCreditsUsed}
+  //         onDecision={onJobSwipe}
+  //         onOpenJob={(job) => onOpenJob(job.id)}
+  //       />
+  //     </View>
+  //   );
+  // }
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg.primary }}>
@@ -102,13 +104,4 @@ function buildBusinessMatchItems(profile: BusinessProfileData | null): BusinessM
     if (enquiry) result.push({ kind: 'enquiry', id: `enquiry:${enquiry.id}`, enquiry });
   }
   return result;
-}
-
-function keywordMatches(text: string, keywords: string[]) {
-  const normalisedText = normalise(text);
-  return keywords.filter((keyword) => keyword.length > 2 && normalisedText.includes(keyword)).length;
-}
-
-function normalise(value: string) {
-  return value.trim().toLowerCase();
 }

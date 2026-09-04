@@ -11,7 +11,9 @@ import { colors, size, spacing } from '../theme';
 export function OpportunitiesScreen({ role, onBack }: { role: UserRole; onBack: () => void }) {
   const [index, setIndex] = useState(0);
   const [sentTo, setSentTo] = useState<string | null>(null);
-  const isJobSeeker = role === 'job-seeker';
+  // Job-seeker path disabled — Binder is business-only for now.
+  // const isJobSeeker = role === 'job-seeker';
+  const isJobSeeker = false;
 
   const list = isJobSeeker ? jobOpportunities : opportunities;
   const item = list[index];
@@ -53,18 +55,19 @@ export function OpportunitiesScreen({ role, onBack }: { role: UserRole; onBack: 
     );
   }
 
-  if (isJobSeeker) {
-    const job = item as JobOpportunity;
-
-    return (
-      <Screen scroll={false}>
-        <BackHeader title={`Job ${index + 1} of ${list.length}`} onBack={onBack} />
-        <View style={{ flex: 1, paddingBottom: spacing[6], paddingTop: spacing[2] }}>
-          <JobOpportunityCard job={job} onPass={advance} onApply={() => setSentTo(job.company)} />
-        </View>
-      </Screen>
-    );
-  }
+  // Job-seeker path disabled — Binder is business-only for now.
+  // if (isJobSeeker) {
+  //   const job = item as JobOpportunity;
+  //
+  //   return (
+  //     <Screen scroll={false}>
+  //       <BackHeader title={`Job ${index + 1} of ${list.length}`} onBack={onBack} />
+  //       <View style={{ flex: 1, paddingBottom: spacing[6], paddingTop: spacing[2] }}>
+  //         <JobOpportunityCard job={job} onPass={advance} onApply={() => setSentTo(job.company)} />
+  //       </View>
+  //     </Screen>
+  //   );
+  // }
 
   const enquiry = item as Enquiry;
 
