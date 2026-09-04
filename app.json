@@ -17,8 +17,7 @@
           "image": "./assets/splash-icon.png"
         }
       ],
-      "expo-font",
-      "expo-status-bar"
+      "expo-font"
     ],
     "ios": {
       "bundleIdentifier": "com.roshan.binder",
