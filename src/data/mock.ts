@@ -43,6 +43,7 @@ export type Enquiry = {
 
 export type UserRole = 'business' | 'job-seeker';
 export type BuyerAudience = 'businesses-only' | 'businesses-and-individuals';
+export type TradeIntent = 'buyer' | 'seller' | 'both';
 
 export type BusinessProfileData = {
   gstin?: string;
@@ -54,6 +55,7 @@ export type BusinessProfileData = {
   offers: string[];
   needs: string[];
   acceptsOrdersFrom: BuyerAudience;
+  tradeIntent: TradeIntent;
   verificationStatus: 'unverified' | 'verified';
 };
 
@@ -100,6 +102,7 @@ export const me = {
   offers: ['Manufacturer', 'Distributor'],
   needs: ['Packaging', 'Logistics'],
   acceptsOrdersFrom: 'businesses-and-individuals' as BuyerAudience,
+  tradeIntent: 'both' as TradeIntent,
   completeness: 72,
 };
 

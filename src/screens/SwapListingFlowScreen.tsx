@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { View } from 'react-native';
 import { BackHeader, Button, Chip, ConfirmSheet, DetailRow, Divider, Icon, Input, Screen, ScreenHeading, SectionHeader, StatusNotice, Text, TextButton } from '../components';
+import type { TradeIntent } from '../data/mock';
 import { SWAP_CATEGORIES } from '../data/swaps';
 import { colors, rhythm, size, spacing } from '../theme';
 
@@ -26,9 +27,11 @@ const initialDraft: SwapDraft = {
   location: 'Kanpur, Uttar Pradesh',
 };
 
-export function SwapListingFlowScreen({ mode = 'create', onBack, onDone }: {
-  mode?: 'create' | 'edit'; onBack: () => void; onDone: () => void;
+export function SwapListingFlowScreen({ mode = 'create', tradeIntent = 'both', onBack, onDone }: {
+  mode?: 'create' | 'edit'; tradeIntent?: TradeIntent; onBack: () => void; onDone: () => void;
 }) {
+  const showOffering = tradeIntent !== 'buyer';
+  const showSeeking = tradeIntent !== 'seller';
   const [draft, setDraft] = useState(initialDraft);
   const [step, setStep] = useState<'form' | 'preview' | 'published' | 'closed'>('form');
   const [closeOpen, setCloseOpen] = useState(false);
@@ -36,10 +39,14 @@ export function SwapListingFlowScreen({ mode = 'create', onBack, onDone }: {
   const field = (key: keyof SwapDraft) => (value: string) => setDraft((current) => ({ ...current, [key]: value }));
   const validate = () => {
     const next: Record<string, string> = {};
-    if (!draft.offeringTitle.trim()) next.offeringTitle = 'Describe what your business has to offer.';
-    if (!draft.offeringCategory.trim()) next.offeringCategory = 'Choose a category for what you offer.';
-    if (!draft.seekingTitle.trim()) next.seekingTitle = 'Describe what your business needs in return.';
-    if (!draft.seekingCategory.trim()) next.seekingCategory = 'Choose a category for what you need.';
+    if (showOffering) {
+      if (!draft.offeringTitle.trim()) next.offeringTitle = 'Describe what your business has to offer.';
+      if (!draft.offeringCategory.trim()) next.offeringCategory = 'Choose a category for what you offer.';
+    }
+    if (showSeeking) {
+      if (!draft.seekingTitle.trim()) next.seekingTitle = 'Describe what your business needs in return.';
+      if (!draft.seekingCategory.trim()) next.seekingCategory = 'Choose a category for what you need.';
+    }
     setErrors(next);
     if (!Object.keys(next).length) setStep('preview');
   };
@@ -67,18 +74,22 @@ export function SwapListingFlowScreen({ mode = 'create', onBack, onDone }: {
         <BackHeader title="Preview swap listing" onBack={() => setStep('form')} action={<TextButton label="Edit" onPress={() => setStep('form')} />} />
         <View style={{ paddingTop: spacing[3], gap: spacing[2] }}><Text variant="micro" tone="chrome">Draft preview</Text><Text variant="heading1">{draft.offeringTitle}</Text><Text variant="body" tone="secondary">{draft.offeringCategory} · {draft.location}</Text></View>
         <Divider tone="chrome" style={{ marginTop: rhythm.titleToContent }} />
-        <View style={{ marginTop: spacing[6], gap: spacing[2] }}>
-          <SectionHeader title="You offer" />
-          <DetailRow label="Item" value={draft.offeringTitle} />
-          <DetailRow label="Category" value={draft.offeringCategory} />
-          {draft.offeringQuantity ? <DetailRow label="Quantity" value={draft.offeringQuantity} /> : null}
-        </View>
-        <View style={{ marginTop: rhythm.sectionToSection, gap: spacing[2] }}>
-          <SectionHeader title="You're seeking" />
-          <DetailRow label="Item" value={draft.seekingTitle} />
-          <DetailRow label="Category" value={draft.seekingCategory} />
-        </View>
-        <View style={{ marginTop: rhythm.sectionToSection, gap: spacing[3] }}><SectionHeader title="Details" /><Text variant="body" tone="secondary">{draft.offeringDescription}</Text></View>
+        {showOffering ? (
+          <View style={{ marginTop: spacing[6], gap: spacing[2] }}>
+            <SectionHeader title="You offer" />
+            <DetailRow label="Item" value={draft.offeringTitle} />
+            <DetailRow label="Category" value={draft.offeringCategory} />
+            {draft.offeringQuantity ? <DetailRow label="Quantity" value={draft.offeringQuantity} /> : null}
+          </View>
+        ) : null}
+        {showSeeking ? (
+          <View style={{ marginTop: rhythm.sectionToSection, gap: spacing[2] }}>
+            <SectionHeader title="You're seeking" />
+            <DetailRow label="Item" value={draft.seekingTitle} />
+            <DetailRow label="Category" value={draft.seekingCategory} />
+          </View>
+        ) : null}
+        <View style={{ marginTop: rhythm.sectionToSection, gap: spacing[3] }}><SectionHeader title="Details" /><Text variant="body" tone="secondary">{showOffering ? draft.offeringDescription : draft.seekingDescription}</Text></View>
       </Screen>
     );
   }
@@ -88,30 +99,38 @@ export function SwapListingFlowScreen({ mode = 'create', onBack, onDone }: {
       <BackHeader title={mode === 'edit' ? 'Edit swap listing' : 'Create swap listing'} onBack={onBack} action={mode === 'edit' ? <TextButton label="Close" tone="danger" onPress={() => setCloseOpen(true)} /> : undefined} />
       <ScreenHeading title={mode === 'edit' ? 'Refine your swap.' : 'What can your business trade?'} supporting="Clear details help Binder find a business whose needs mirror yours." />
       <View style={{ gap: spacing[5], marginTop: spacing[8] }}>
-        <SectionHeader title="You offer" />
-        <Input label="What are you offering" value={draft.offeringTitle} onChangeText={field('offeringTitle')} error={errors.offeringTitle} />
-        <View style={{ gap: spacing[2] }}>
-          <Text variant="label" tone="secondary">Category</Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
-            {SWAP_CATEGORIES.map((item) => <Chip key={item} label={item} selected={draft.offeringCategory === item} onPress={() => field('offeringCategory')(item)} />)}
-          </View>
-          {errors.offeringCategory ? <Text variant="bodySmall" tone="danger">{errors.offeringCategory}</Text> : null}
-        </View>
-        <Input label="Quantity (optional)" value={draft.offeringQuantity} onChangeText={field('offeringQuantity')} />
-        <Input label="Description" value={draft.offeringDescription} onChangeText={field('offeringDescription')} multiline />
+        {showOffering ? (
+          <>
+            <SectionHeader title="You offer" />
+            <Input label="What are you offering" value={draft.offeringTitle} onChangeText={field('offeringTitle')} error={errors.offeringTitle} />
+            <View style={{ gap: spacing[2] }}>
+              <Text variant="label" tone="secondary">Category</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
+                {SWAP_CATEGORIES.map((item) => <Chip key={item} label={item} selected={draft.offeringCategory === item} onPress={() => field('offeringCategory')(item)} />)}
+              </View>
+              {errors.offeringCategory ? <Text variant="bodySmall" tone="danger">{errors.offeringCategory}</Text> : null}
+            </View>
+            <Input label="Quantity (optional)" value={draft.offeringQuantity} onChangeText={field('offeringQuantity')} />
+            <Input label="Description" value={draft.offeringDescription} onChangeText={field('offeringDescription')} multiline />
+          </>
+        ) : null}
 
-        <Divider style={{ marginVertical: spacing[2] }} />
+        {showOffering && showSeeking ? <Divider style={{ marginVertical: spacing[2] }} /> : null}
 
-        <SectionHeader title="You're seeking" />
-        <Input label="What do you need in return" value={draft.seekingTitle} onChangeText={field('seekingTitle')} error={errors.seekingTitle} />
-        <View style={{ gap: spacing[2] }}>
-          <Text variant="label" tone="secondary">Category</Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
-            {SWAP_CATEGORIES.map((item) => <Chip key={item} label={item} selected={draft.seekingCategory === item} onPress={() => field('seekingCategory')(item)} />)}
-          </View>
-          {errors.seekingCategory ? <Text variant="bodySmall" tone="danger">{errors.seekingCategory}</Text> : null}
-        </View>
-        <Input label="Description" value={draft.seekingDescription} onChangeText={field('seekingDescription')} multiline />
+        {showSeeking ? (
+          <>
+            <SectionHeader title="You're seeking" />
+            <Input label="What do you need in return" value={draft.seekingTitle} onChangeText={field('seekingTitle')} error={errors.seekingTitle} />
+            <View style={{ gap: spacing[2] }}>
+              <Text variant="label" tone="secondary">Category</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
+                {SWAP_CATEGORIES.map((item) => <Chip key={item} label={item} selected={draft.seekingCategory === item} onPress={() => field('seekingCategory')(item)} />)}
+              </View>
+              {errors.seekingCategory ? <Text variant="bodySmall" tone="danger">{errors.seekingCategory}</Text> : null}
+            </View>
+            <Input label="Description" value={draft.seekingDescription} onChangeText={field('seekingDescription')} multiline />
+          </>
+        ) : null}
         <Input label="Location" value={draft.location} onChangeText={field('location')} />
       </View>
       <ConfirmSheet visible={closeOpen} eyebrow="Destructive action" title="Close this swap listing?" body="Other businesses will no longer be able to propose a swap. Existing conversations will stay available." confirmLabel="Close listing" destructive onClose={() => setCloseOpen(false)} onConfirm={() => { setCloseOpen(false); setStep('closed'); }} />

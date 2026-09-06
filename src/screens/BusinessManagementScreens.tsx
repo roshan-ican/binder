@@ -158,6 +158,7 @@ export function BusinessProfileEditorScreen({
       offers: profile?.offers ?? me.offers,
       needs: profile?.needs ?? me.needs,
       acceptsOrdersFrom,
+      tradeIntent: profile?.tradeIntent ?? me.tradeIntent,
       verificationStatus: profile?.verificationStatus ?? "unverified",
       gstin: profile?.gstin,
     });

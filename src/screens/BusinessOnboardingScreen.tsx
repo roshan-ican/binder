@@ -1,7 +1,7 @@
 import { View } from 'react-native';
 import { Controller, useForm } from 'react-hook-form';
 import { BusinessIndustryPicker, Button, Chip, Input, Screen, ScreenHeading, Text, TrustBadge } from '../components';
-import type { BusinessProfileData, BuyerAudience } from '../data/mock';
+import type { BusinessProfileData, BuyerAudience, TradeIntent } from '../data/mock';
 import { spacing } from '../theme';
 
 type FormValues = {
@@ -20,7 +20,7 @@ const defaults: FormValues = {
 
 const offerOptions = ['Manufacturer', 'Supplier', 'Distributor', 'Wholesaler', 'Retailer', 'Service provider'] as const;
 
-export function BusinessOnboardingScreen({ onComplete }: { onComplete: (profile: BusinessProfileData) => void }) {
+export function BusinessOnboardingScreen({ tradeIntent, onComplete }: { tradeIntent: TradeIntent; onComplete: (profile: BusinessProfileData) => void }) {
   const { control, handleSubmit, formState: { isSubmitting } } = useForm<FormValues>({ defaultValues: defaults });
 
   const save = (values: FormValues) => onComplete({
@@ -32,6 +32,7 @@ export function BusinessOnboardingScreen({ onComplete }: { onComplete: (profile:
     offers: values.offers,
     needs: values.needs.split(',').map((item) => item.trim()).filter(Boolean),
     acceptsOrdersFrom: values.acceptsOrdersFrom,
+    tradeIntent,
     verificationStatus: 'unverified',
   });
 

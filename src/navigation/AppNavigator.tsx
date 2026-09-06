@@ -3,11 +3,12 @@ import { Animated, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomTabs, BusinessTrustGate, type BusinessMatchItem, type TabKey } from '../components';
-import type { BusinessProfileData, JobSeekerProfileData, UserRole } from '../data/mock';
+import type { BusinessProfileData, JobSeekerProfileData, TradeIntent, UserRole } from '../data/mock';
 import { colors, motion } from '../theme';
 import { BusinessProfileScreen } from '../screens/BusinessProfileScreen';
 import { BusinessVerificationScreen } from '../screens/BusinessVerificationScreen';
 import { BusinessOnboardingScreen } from '../screens/BusinessOnboardingScreen';
+import { ContactScreen } from '../screens/ContactScreen';
 import { ConversationScreen } from '../screens/ConversationScreen';
 import { DiscoverScreen } from '../screens/DiscoverScreen';
 import { EnquiriesScreen } from '../screens/EnquiriesScreen';
@@ -17,6 +18,7 @@ import { InboxScreen } from '../screens/InboxScreen';
 // import { JobSeekerOnboardingScreen } from '../screens/JobSeekerOnboardingScreen';
 import { MatchScreen } from '../screens/MatchScreen';
 import { OpportunitiesScreen } from '../screens/OpportunitiesScreen';
+import { OtpScreen } from '../screens/OtpScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { SearchResultsScreen } from '../screens/SearchResultsScreen';
 import { WelcomeScreen } from '../screens/WelcomeScreen';
@@ -36,6 +38,8 @@ import { AccountPrivacyScreen, ConversationDetailsScreen, NotificationPreference
  */
 type Route =
   | { name: 'welcome' }
+  | { name: 'contact' }
+  | { name: 'otp' }
   | { name: 'business-onboarding' }
   | { name: 'business-verification'; source: 'onboarding' | 'gate' | 'profile' }
   // Job-seeker-only routes disabled — Binder is business-only for now.
@@ -83,7 +87,9 @@ export function AppNavigator() {
   const [tab, setTab] = useState<TabKey>('match');
   const [query, setQuery] = useState('');
   const [role, setRole] = useState<UserRole>('business');
+  const [tradeIntent, setTradeIntent] = useState<TradeIntent | null>(null);
   const [businessProfile, setBusinessProfile] = useState<BusinessProfileData | null>(null);
+  const [contact, setContact] = useState<{ phone: string; email: string } | null>(null);
   const [jobSeekerProfile, setJobSeekerProfile] = useState<JobSeekerProfileData | null>(null);
   const [jobSwipeCreditsUsed, setJobSwipeCreditsUsed] = useState(0);
   const [businessSwipeCreditsUsed, setBusinessSwipeCreditsUsed] = useState(0);
@@ -133,14 +139,34 @@ export function AppNavigator() {
   if (route.name === 'welcome') {
     return (
       <WelcomeScreen
-        onSelectRole={(nextRole) => {
+        onSelectRole={(nextRole, intent) => {
           setRole(nextRole);
+          setTradeIntent(intent);
           // Job-seeker path disabled — Binder is business-only for now.
-          // reset({ name: nextRole === 'business' ? 'business-onboarding' : 'job-seeker-onboarding' });
-          reset({ name: 'business-onboarding' });
+          // reset({ name: nextRole === 'business' ? 'contact' : 'job-seeker-onboarding' });
+          reset({ name: 'contact' });
         }}
         onExplore={() => { setTab('discover'); reset({ name: 'tabs' }); }}
         onSignIn={() => push({ name: 'sign-in' })}
+      />
+    );
+  }
+
+  if (route.name === 'contact') {
+    return (
+      <ContactScreen
+        onBack={() => reset({ name: 'welcome' })}
+        onContinue={(nextContact) => { setContact(nextContact); push({ name: 'otp' }); }}
+      />
+    );
+  }
+
+  if (route.name === 'otp' && contact) {
+    return (
+      <OtpScreen
+        phone={contact.phone}
+        onBack={pop}
+        onVerify={() => reset({ name: 'business-onboarding' })}
       />
     );
   }
@@ -150,7 +176,7 @@ export function AppNavigator() {
   }
 
   if (route.name === 'business-onboarding') {
-    return <BusinessOnboardingScreen onComplete={(profile) => { setBusinessProfile(profile); reset({ name: 'business-verification', source: 'onboarding' }); }} />;
+    return <BusinessOnboardingScreen tradeIntent={tradeIntent ?? 'both'} onComplete={(profile) => { setBusinessProfile(profile); reset({ name: 'business-verification', source: 'onboarding' }); }} />;
   }
 
   if (route.name === 'business-verification' && businessProfile) {
@@ -236,7 +262,7 @@ export function AppNavigator() {
           />
         );
       case 'swap-compose':
-        return <SwapListingFlowScreen mode={route.mode} onBack={pop} onDone={() => { setTab('swaps'); reset({ name: 'tabs' }); }} />;
+        return <SwapListingFlowScreen mode={route.mode} tradeIntent={businessProfile?.tradeIntent ?? 'both'} onBack={pop} onDone={() => { setTab('swaps'); reset({ name: 'tabs' }); }} />;
       case 'saved-businesses':
         return <SavedBusinessesScreen onBack={pop} onOpenBusiness={(id) => push({ name: 'business', id })} />;
       case 'business-profile-edit':

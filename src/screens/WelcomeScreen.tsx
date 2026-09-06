@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { View } from "react-native";
-import { Button, Screen, Text, TextButton } from "../components";
-import type { UserRole } from "../data/mock";
+import { Button, Screen, Text, TextButton, ToggleRow } from "../components";
+import type { TradeIntent, UserRole } from "../data/mock";
 import { colors, spacing } from "../theme";
 
 /** First choose the side of the marketplace before entering the app. */
@@ -9,10 +10,23 @@ export function WelcomeScreen({
   onExplore,
   onSignIn,
 }: {
-  onSelectRole: (role: UserRole) => void;
+  onSelectRole: (role: UserRole, intent: TradeIntent) => void;
   onExplore: () => void;
   onSignIn?: () => void;
 }) {
+  const [isBuyer, setIsBuyer] = useState(false);
+  const [wantsToSell, setWantsToSell] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleContinue = () => {
+    if (!isBuyer && !wantsToSell) {
+      setError('Choose at least one to continue.');
+      return;
+    }
+    const intent: TradeIntent = isBuyer && wantsToSell ? 'both' : wantsToSell ? 'seller' : 'buyer';
+    onSelectRole('business', intent);
+  };
+
   return (
     <Screen density="hero" scroll={false}>
       <View
@@ -37,10 +51,22 @@ export function WelcomeScreen({
           </View>
 
           <View style={{ gap: spacing[3] }}>
-            <Button
-              label="I am a business"
-              onPress={() => onSelectRole("business")}
+            <ToggleRow
+              label="Are you a buyer?"
+              detail="You'll browse and post what your business needs."
+              value={isBuyer}
+              onChange={(value) => { setIsBuyer(value); setError(null); }}
             />
+            <ToggleRow
+              label="Do you also want to sell?"
+              detail="List what your business can offer to other buyers."
+              value={wantsToSell}
+              onChange={(value) => { setWantsToSell(value); setError(null); }}
+            />
+            {error ? (
+              <Text variant="bodySmall" tone="danger">{error}</Text>
+            ) : null}
+            <Button label="Continue" onPress={handleContinue} />
             {/* Job-seeker path disabled — Binder is business-only for now.
             <Button
               label="I am a job seeker"
