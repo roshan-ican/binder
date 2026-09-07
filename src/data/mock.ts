@@ -52,6 +52,8 @@ export type BusinessProfileData = {
   industry: string;
   industries: string[];
   city: string;
+  /** State/region for `city`. Optional so existing profile-editing screens that only edit `city` still type-check. */
+  region?: string;
   offers: string[];
   needs: string[];
   acceptsOrdersFrom: BuyerAudience;

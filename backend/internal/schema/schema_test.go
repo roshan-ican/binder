@@ -76,8 +76,8 @@ func TestMigrationsApplyAndRollBackCleanly(t *testing.T) {
 	if dirty {
 		t.Fatalf("expected clean migration state, got dirty at version %d", version)
 	}
-	if version != 2 {
-		t.Fatalf("expected to land on migration 2, got %d", version)
+	if version != 4 {
+		t.Fatalf("expected to land on migration 4, got %d", version)
 	}
 
 	if err := m.Down(); err != nil {
@@ -219,6 +219,55 @@ func TestSupplierBusinessIDIsOptionalAndUnique(t *testing.T) {
 	}
 	if _, err := pool.Exec(ctx, `INSERT INTO suppliers (business_id, name, source_type) VALUES ($1, 'B', 'binder_signup')`, businessID); err == nil {
 		t.Fatal("expected a second supplier row for the same business_id to be rejected")
+	}
+}
+
+// Every application table must have row-level security on. Binder's clients
+// never touch Supabase's Data API -- they go through the Go backend -- so the
+// tables are deny-everything by default (RLS enabled, no policies) and only
+// the owning role, which the backend connects as, can reach them. A new table
+// added without an ENABLE ROW LEVEL SECURITY line would silently be readable
+// by anyone holding the publishable key, so this fails the build instead.
+func TestEveryTableHasRowLevelSecurityEnabled(t *testing.T) {
+	url := testDatabaseURL(t)
+	applyMigrations(t, url)
+
+	ctx := context.Background()
+	pool, err := pgxpool.New(ctx, url)
+	if err != nil {
+		t.Fatalf("connect: %v", err)
+	}
+	defer pool.Close()
+
+	// schema_migrations is golang-migrate's bookkeeping, not ours to alter.
+	rows, err := pool.Query(ctx, `
+		SELECT c.relname
+		FROM pg_class c
+		JOIN pg_namespace n ON n.oid = c.relnamespace
+		WHERE n.nspname = 'public'
+		  AND c.relkind = 'r'
+		  AND c.relname != 'schema_migrations'
+		  AND NOT c.relrowsecurity
+		ORDER BY c.relname
+	`)
+	if err != nil {
+		t.Fatalf("query tables without RLS: %v", err)
+	}
+	defer rows.Close()
+
+	var unprotected []string
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			t.Fatalf("scan: %v", err)
+		}
+		unprotected = append(unprotected, name)
+	}
+	if err := rows.Err(); err != nil {
+		t.Fatalf("iterate: %v", err)
+	}
+	if len(unprotected) > 0 {
+		t.Fatalf("tables missing row-level security: %v -- add ENABLE ROW LEVEL SECURITY in a migration", unprotected)
 	}
 }
 

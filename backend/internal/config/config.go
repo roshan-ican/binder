@@ -9,6 +9,7 @@ import (
 type Config struct {
 	DatabaseURL string
 	Port        string
+	SupabaseURL string
 }
 
 func Load() Config {
@@ -19,6 +20,9 @@ func Load() Config {
 	return Config{
 		DatabaseURL: getenv("DATABASE_URL", "postgres://localhost:5432/binder?sslmode=disable"),
 		Port:        getenv("PORT", "8080"),
+		// No sensible fallback -- this is a specific project's URL, not a
+		// generic local default like DATABASE_URL's. Set it in backend/.env.
+		SupabaseURL: getenv("SUPABASE_URL", ""),
 	}
 }
 

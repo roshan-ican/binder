@@ -14,6 +14,8 @@ import {
   TrustBadge,
 } from '../components';
 import { businesses } from '../data/mock';
+import { publicBusinessEnquiries } from '../data/businessActivity';
+import { BusinessEnquiryActivity } from '../components/BusinessEnquiryActivity';
 import { swapListings } from '../data/swaps';
 import { colors, rhythm, size, spacing } from '../theme';
 
@@ -33,6 +35,9 @@ export function BusinessProfileScreen({
   onOpenSwap?: (id: string) => void;
 }) {
   const business = businesses.find((item) => item.id === businessId) ?? businesses[0];
+  const publicActivity = publicBusinessEnquiries.filter((item) => item.businessId === business.id);
+  const currentNeeds = publicActivity.filter((item) => item.status === 'active');
+  const pastEnquiries = publicActivity.filter((item) => item.status !== 'active');
   const activeSwapListings = swapListings.filter((listing) => listing.businessId === business.id && listing.status === 'active');
 
   return (
@@ -90,19 +95,35 @@ export function BusinessProfileScreen({
       <Divider style={{ marginTop: spacing[6] }} />
 
       <View style={{ marginTop: spacing[6], gap: spacing[3] }}>
-        <SectionHeader title="About" />
+        <SectionHeader title="What they do" />
         <Text variant="body" tone="secondary">
           {business.about}
         </Text>
       </View>
 
       <View style={{ marginTop: spacing[6], gap: spacing[3] }}>
-        <SectionHeader title="Offers" />
+        <SectionHeader title="What they offer" />
         <View style={{ flexDirection: 'row', gap: spacing[2], flexWrap: 'wrap' }}>
           {business.offers.map((offer) => (
             <Chip key={offer} label={offer} />
           ))}
         </View>
+      </View>
+
+      <Divider style={{ marginTop: spacing[6] }} />
+
+      <View style={{ marginTop: spacing[6], gap: spacing[3] }}>
+        <SectionHeader title="Current needs" supporting="Open public enquiries from this business." />
+        {currentNeeds.length ? currentNeeds.map((enquiry) => (
+          <BusinessEnquiryActivity key={enquiry.id} enquiry={enquiry} onRespond={() => onConnect(business.id)} />
+        )) : <Text variant="body" tone="secondary">No public enquiries open right now.</Text>}
+      </View>
+
+      <View style={{ marginTop: spacing[6], gap: spacing[3] }}>
+        <SectionHeader title="Past enquiries" supporting="Public enquiry history. Closed does not mean a deal was completed." />
+        {pastEnquiries.length ? pastEnquiries.map((enquiry) => (
+          <BusinessEnquiryActivity key={enquiry.id} enquiry={enquiry} onRespond={() => onConnect(business.id)} />
+        )) : <Text variant="body" tone="secondary">No past public enquiries to show yet.</Text>}
       </View>
 
       {activeSwapListings.length > 0 ? (
@@ -135,11 +156,11 @@ export function BusinessProfileScreen({
 
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
-    <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: spacing[2] }}>
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: spacing[3], paddingVertical: spacing[2] }}>
       <Text variant="body" tone="tertiary">
         {label}
       </Text>
-      <Text variant="body">{value}</Text>
+      <Text variant="body" style={{ flex: 1, textAlign: 'right' }}>{value}</Text>
     </View>
   );
 }

@@ -8,7 +8,9 @@ import { colors, motion } from '../theme';
 import { BusinessProfileScreen } from '../screens/BusinessProfileScreen';
 import { BusinessVerificationScreen } from '../screens/BusinessVerificationScreen';
 import { BusinessOnboardingScreen } from '../screens/BusinessOnboardingScreen';
-import { ContactScreen } from '../screens/ContactScreen';
+import { ContactScreen, type ContactMethod } from '../screens/ContactScreen';
+import { signInWithGoogle, verifyEmailOtp, verifyPhoneOtp, restoreAuthSession, signOut } from '../features/auth/session';
+import { sendEmailOtp, sendPhoneOtp } from '../features/auth/otpAuth';
 import { ConversationScreen } from '../screens/ConversationScreen';
 import { DiscoverScreen } from '../screens/DiscoverScreen';
 import { EnquiriesScreen } from '../screens/EnquiriesScreen';
@@ -77,19 +79,28 @@ type Route =
 const sessionStorageKey = 'binder.session.v1';
 
 type StoredSession = {
+  userId: string;
   role: UserRole;
+  businessProfile: BusinessProfileData | null;
 };
 
 export function AppNavigator() {
   const insets = useSafeAreaInsets();
   const [stack, setStack] = useState<Route[]>([{ name: 'welcome' }]);
+  const authUserId = useRef<string | null>(null);
   const [sessionReady, setSessionReady] = useState(false);
   const [tab, setTab] = useState<TabKey>('match');
   const [query, setQuery] = useState('');
   const [role, setRole] = useState<UserRole>('business');
   const [tradeIntent, setTradeIntent] = useState<TradeIntent | null>(null);
   const [businessProfile, setBusinessProfile] = useState<BusinessProfileData | null>(null);
-  const [contact, setContact] = useState<{ phone: string; email: string } | null>(null);
+  const [contact, setContact] = useState<{ method: ContactMethod; identifier: string } | null>(null);
+  const [googleBusy, setGoogleBusy] = useState(false);
+  const [sendBusy, setSendBusy] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
+  const [verifyBusy, setVerifyBusy] = useState(false);
+  const [verifyError, setVerifyError] = useState<string | null>(null);
+  const [resendBusy, setResendBusy] = useState(false);
   const [jobSeekerProfile, setJobSeekerProfile] = useState<JobSeekerProfileData | null>(null);
   const [jobSwipeCreditsUsed, setJobSwipeCreditsUsed] = useState(0);
   const [businessSwipeCreditsUsed, setBusinessSwipeCreditsUsed] = useState(0);
@@ -99,12 +110,17 @@ export function AppNavigator() {
   useEffect(() => {
     const restoreSession = async () => {
       try {
-        const stored = await AsyncStorage.getItem(sessionStorageKey);
-        if (!stored) return;
-        const session = JSON.parse(stored) as StoredSession;
-        if (session.role === 'business' || session.role === 'job-seeker') {
-          setRole(session.role);
+        const authSession = await restoreAuthSession();
+        if (!authSession) return;
+        authUserId.current = authSession.user.id;
+        const stored = await AsyncStorage.getItem(`${sessionStorageKey}:${authSession.user.id}`);
+        const local = stored ? JSON.parse(stored) as StoredSession : null;
+        if (local?.userId === authSession.user.id && (local.role === 'business' || local.role === 'job-seeker')) {
+          setRole(local.role);
+          setBusinessProfile(local.businessProfile ?? null);
           setStack([{ name: 'tabs' }]);
+        } else {
+          setStack([{ name: 'business-onboarding' }]);
         }
       } catch {
         // A malformed or unavailable local session should never block entry.
@@ -121,15 +137,104 @@ export function AppNavigator() {
   const reset = (next: Route) => setStack([next]);
   const persistSession = (nextRole: UserRole) => {
     setRole(nextRole);
-    void AsyncStorage.setItem(sessionStorageKey, JSON.stringify({ role: nextRole } satisfies StoredSession));
+    const userId = authUserId.current;
+    if (userId) void AsyncStorage.setItem(`${sessionStorageKey}:${userId}`, JSON.stringify({ userId, role: nextRole, businessProfile } satisfies StoredSession)).catch(() => { /* Prototype data is best-effort; it does not grant access. */ });
   };
-  const clearSession = () => {
-    void AsyncStorage.removeItem(sessionStorageKey);
+  const clearSession = async () => {
+    try {
+      await signOut();
+      authUserId.current = null;
+      setBusinessProfile(null);
+      setJobSeekerProfile(null);
+      setTradeIntent(null);
+      setContact(null);
+      setSendError(null);
+      setVerifyError(null);
+      setRole('business');
+      setTrustGateOpen(false);
+      pendingTrustAction.current = null;
+      reset({ name: 'welcome' });
+    } catch {
+      setSendError('Could not sign out. Please try again.');
+      reset({ name: 'contact' });
+    }
   };
   const runTrustAction = (action: () => void) => {
     if (role !== 'business' || businessProfile?.verificationStatus === 'verified') return action();
     pendingTrustAction.current = action;
     setTrustGateOpen(true);
+  };
+  /** Local onboarding state is scoped to the signed-in user, never an authorization source. */
+  const enterAppAfterAuth = async (session: { user: { id: string } }) => {
+    authUserId.current = session.user.id;
+    let local: StoredSession | null = null;
+    try {
+      const stored = await AsyncStorage.getItem(`${sessionStorageKey}:${session.user.id}`);
+      local = stored ? JSON.parse(stored) as StoredSession : null;
+    } catch { /* Missing prototype data starts onboarding. */ }
+    setBusinessProfile(null);
+    setRole('business');
+    if (local?.userId === session.user.id && (local.role === 'business' || local.role === 'job-seeker')) {
+      setRole(local.role);
+      setBusinessProfile(local.businessProfile ?? null);
+      setTab('match');
+      reset({ name: 'tabs' });
+    } else {
+      reset({ name: 'business-onboarding' });
+    }
+  };
+  const handleGoogleContinue = async () => {
+    setGoogleBusy(true);
+    setSendError(null);
+    try {
+      await enterAppAfterAuth(await signInWithGoogle());
+    } catch (err) {
+      setSendError(err instanceof Error ? err.message : 'Could not sign in with Google. Please try again.');
+    } finally {
+      setGoogleBusy(false);
+    }
+  };
+  const handleSendCode = async ({ method, identifier }: { method: ContactMethod; identifier: string }) => {
+    setSendBusy(true);
+    setSendError(null);
+    try {
+      if (method === 'phone') await sendPhoneOtp(identifier);
+      else await sendEmailOtp(identifier);
+      setContact({ method, identifier });
+      setVerifyError(null);
+      push({ name: 'otp' });
+    } catch (err) {
+      setSendError(err instanceof Error ? err.message : 'Could not send the code. Try again.');
+    } finally {
+      setSendBusy(false);
+    }
+  };
+  const handleVerifyCode = async (code: string) => {
+    if (!contact) return;
+    setVerifyBusy(true);
+    setVerifyError(null);
+    try {
+      const result = contact.method === 'phone'
+        ? await verifyPhoneOtp(contact.identifier, code)
+        : await verifyEmailOtp(contact.identifier, code);
+      await enterAppAfterAuth(result);
+    } catch (err) {
+      setVerifyError(err instanceof Error ? err.message : 'Invalid code. Try again.');
+    } finally {
+      setVerifyBusy(false);
+    }
+  };
+  const handleResendCode = async () => {
+    if (!contact) return;
+    setResendBusy(true);
+    try {
+      if (contact.method === 'phone') await sendPhoneOtp(contact.identifier);
+      else await sendEmailOtp(contact.identifier);
+    } catch (err) {
+      setVerifyError(err instanceof Error ? err.message : 'Could not resend the code.');
+    } finally {
+      setResendBusy(false);
+    }
   };
 
   if (!sessionReady) {
@@ -156,7 +261,11 @@ export function AppNavigator() {
     return (
       <ContactScreen
         onBack={() => reset({ name: 'welcome' })}
-        onContinue={(nextContact) => { setContact(nextContact); push({ name: 'otp' }); }}
+        onSendCode={handleSendCode}
+        sendBusy={sendBusy}
+        sendError={sendError}
+        onGoogleContinue={handleGoogleContinue}
+        googleBusy={googleBusy}
       />
     );
   }
@@ -164,15 +273,20 @@ export function AppNavigator() {
   if (route.name === 'otp' && contact) {
     return (
       <OtpScreen
-        phone={contact.phone}
+        method={contact.method}
+        identifier={contact.identifier}
         onBack={pop}
-        onVerify={() => reset({ name: 'business-onboarding' })}
+        onVerify={handleVerifyCode}
+        verifyBusy={verifyBusy}
+        verifyError={verifyError}
+        onResend={handleResendCode}
+        resendBusy={resendBusy}
       />
     );
   }
 
   if (route.name === 'sign-in') {
-    return <SignInScreen onBack={pop} onContinue={(nextRole) => { persistSession(nextRole); setTab('match'); reset({ name: 'tabs' }); }} />;
+    return <SignInScreen onBack={pop} onContinue={(nextRole) => { setRole(nextRole); reset({ name: 'contact' }); }} />;
   }
 
   if (route.name === 'business-onboarding') {
@@ -305,7 +419,7 @@ export function AppNavigator() {
       case 'notifications':
         return <NotificationPreferencesScreen onBack={pop} />;
       case 'account':
-        return <AccountPrivacyScreen onBack={pop} onSignOut={() => { clearSession(); reset({ name: 'welcome' }); }} />;
+        return <AccountPrivacyScreen onBack={pop} onSignOut={() => { void clearSession(); }} />;
       case 'states':
         return <StateGalleryScreen onBack={pop} />;
       case 'tabs':

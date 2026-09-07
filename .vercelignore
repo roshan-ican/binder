@@ -1,0 +1,15 @@
+node_modules/
+.git/
+.expo/
+.vercel/
+dist/
+.env
+.env.*
+backend/
+.openai/
+.agents/
+.codex/
+.wrangler/
+.dev.vars*
+ios/
+android/
