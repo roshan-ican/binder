@@ -1,6 +1,6 @@
 import { View } from 'react-native';
 import { Controller, useForm } from 'react-hook-form';
-import { BusinessIndustryPicker, Button, Chip, Input, Screen, ScreenHeading, Text, TrustBadge } from '../components';
+import { BusinessIndustryPicker, Button, Chip, CityStatePicker, Input, Screen, ScreenHeading, Text, TrustBadge } from '../components';
 import type { BusinessProfileData, BuyerAudience, TradeIntent } from '../data/mock';
 import { spacing } from '../theme';
 
@@ -9,19 +9,20 @@ type FormValues = {
   contactName: string;
   industries: string[];
   city: string;
+  region: string;
   offers: string[];
   needs: string;
   acceptsOrdersFrom: BuyerAudience;
 };
 
 const defaults: FormValues = {
-  businessName: '', contactName: '', industries: [], city: '', offers: [], needs: '', acceptsOrdersFrom: 'businesses-and-individuals',
+  businessName: '', contactName: '', industries: [], city: '', region: '', offers: [], needs: '', acceptsOrdersFrom: 'businesses-and-individuals',
 };
 
 const offerOptions = ['Manufacturer', 'Supplier', 'Distributor', 'Wholesaler', 'Retailer', 'Service provider'] as const;
 
 export function BusinessOnboardingScreen({ tradeIntent, onComplete }: { tradeIntent: TradeIntent; onComplete: (profile: BusinessProfileData) => void }) {
-  const { control, handleSubmit, formState: { isSubmitting } } = useForm<FormValues>({ defaultValues: defaults });
+  const { control, handleSubmit, setValue, watch, formState: { isSubmitting } } = useForm<FormValues>({ defaultValues: defaults });
 
   const save = (values: FormValues) => onComplete({
     businessName: values.businessName.trim(),
@@ -29,6 +30,7 @@ export function BusinessOnboardingScreen({ tradeIntent, onComplete }: { tradeInt
     industry: values.industries[0],
     industries: values.industries,
     city: values.city.trim(),
+    region: values.region.trim(),
     offers: values.offers,
     needs: values.needs.split(',').map((item) => item.trim()).filter(Boolean),
     acceptsOrdersFrom: values.acceptsOrdersFrom,
@@ -51,7 +53,22 @@ export function BusinessOnboardingScreen({ tradeIntent, onComplete }: { tradeInt
             <BusinessIndustryPicker selected={value} onChange={onChange} error={error?.message} />
           )}
         />
-        <FormInput control={control} name="city" label="City" placeholder="Kanpur" />
+        <Controller
+          control={control}
+          name="city"
+          rules={{ validate: (value) => value.trim().length > 0 || 'Choose a city.' }}
+          render={({ field: { value: city }, fieldState: { error } }) => (
+            <CityStatePicker
+              city={city}
+              state={watch('region')}
+              onChange={({ city: nextCity, state: nextState }) => {
+                setValue('city', nextCity, { shouldValidate: true });
+                setValue('region', nextState);
+              }}
+              error={error?.message}
+            />
+          )}
+        />
         <Controller
           control={control}
           name="offers"
@@ -86,7 +103,7 @@ export function BusinessOnboardingScreen({ tradeIntent, onComplete }: { tradeInt
   );
 }
 
-type TextFieldName = Exclude<keyof FormValues, 'offers' | 'industries' | 'acceptsOrdersFrom'>;
+type TextFieldName = Exclude<keyof FormValues, 'offers' | 'industries' | 'acceptsOrdersFrom' | 'city' | 'region'>;
 function FormInput({ control, name, label, placeholder, helper }: { control: ReturnType<typeof useForm<FormValues>>['control']; name: TextFieldName; label: string; placeholder: string; helper?: string }) {
   return <Controller control={control} name={name} rules={{ validate: (value) => value.trim().length > 0 || 'Please enter a value.' }} render={({ field: { value, onChange }, fieldState: { error } }) => <Input label={label} value={value} onChangeText={onChange} placeholder={placeholder} helper={helper} error={error?.message} />} />;
 }

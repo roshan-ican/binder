@@ -2,13 +2,14 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"net/http"
 	"time"
 
 	"github.com/roshan-ican/binder/backend/internal/config"
 	"github.com/roshan-ican/binder/backend/internal/db"
+	"github.com/roshan-ican/binder/backend/internal/httpapi"
+	"github.com/roshan-ican/binder/backend/internal/supabaseauth"
 )
 
 func main() {
@@ -23,18 +24,18 @@ func main() {
 	}
 	defer pool.Close()
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
-		if err := pool.Ping(r.Context()); err != nil {
-			w.WriteHeader(http.StatusServiceUnavailable)
-			json.NewEncoder(w).Encode(map[string]string{"status": "db unreachable"})
-			return
-		}
-		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
-	})
+	if cfg.SupabaseURL == "" {
+		log.Fatal("SUPABASE_URL is required (used to verify Supabase Auth JWTs) -- set it in backend/.env")
+	}
+	verifier, err := supabaseauth.NewVerifier(ctx, cfg.SupabaseURL)
+	if err != nil {
+		log.Fatalf("init supabase auth verifier: %v", err)
+	}
+
+	handler := httpapi.NewRouter(pool, verifier)
 
 	log.Printf("binder api listening on :%s", cfg.Port)
-	if err := http.ListenAndServe(":"+cfg.Port, mux); err != nil {
+	if err := http.ListenAndServe(":"+cfg.Port, handler); err != nil {
 		log.Fatal(err)
 	}
 }

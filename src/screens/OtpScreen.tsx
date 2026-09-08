@@ -1,19 +1,31 @@
 import { useState } from 'react';
 import { View } from 'react-native';
-import { BackHeader, Button, Input, Screen, ScreenHeading, StatusNotice, TextButton } from '../components';
+import { BackHeader, Button, Input, Screen, ScreenHeading, TextButton } from '../components';
 import { spacing } from '../theme';
+import type { ContactMethod } from './ContactScreen';
 
 const CODE_LENGTH = 6;
 
-/** Verifies the phone number sent from ContactScreen before onboarding continues. */
+/** Verifies the phone/email code sent from ContactScreen before onboarding continues. */
 export function OtpScreen({
-  phone,
+  method,
+  identifier,
   onBack,
   onVerify,
+  verifyBusy,
+  verifyError,
+  onResend,
+  resendBusy,
 }: {
-  phone: string;
+  method: ContactMethod;
+  /** Display-ready value the code was sent to — a +91-prefixed phone or an email address. */
+  identifier: string;
   onBack: () => void;
-  onVerify: () => void;
+  onVerify: (code: string) => void;
+  verifyBusy?: boolean;
+  verifyError?: string | null;
+  onResend: () => void;
+  resendBusy?: boolean;
 }) {
   const [code, setCode] = useState('');
   const [resent, setResent] = useState(false);
@@ -23,29 +35,26 @@ export function OtpScreen({
     <Screen
       density="hero"
       scroll={false}
-      footer={<Button label="Verify & continue" disabled={!valid} onPress={onVerify} />}
+      footer={<Button label="Verify & continue" disabled={!valid} loading={verifyBusy} onPress={() => onVerify(code)} />}
     >
       <BackHeader onBack={onBack} />
       <View style={{ flex: 1, justifyContent: 'center', gap: spacing[8] }}>
         <ScreenHeading
           title="Enter the code"
-          supporting={`We sent a ${CODE_LENGTH}-digit code to +91 ${phone}.`}
+          supporting={`We sent a ${CODE_LENGTH}-digit code ${method === 'phone' ? 'to' : 'to your email'} ${identifier}.`}
         />
         <Input
           label="Verification code"
           value={code}
-          onChangeText={(value) => setCode(value.replace(/\D/g, '').slice(0, CODE_LENGTH))}
+          onChangeText={(value) => { setCode(value.replace(/\D/g, '').slice(0, CODE_LENGTH)); setResent(false); }}
           keyboardType="number-pad"
           placeholder="123456"
-        />
-        <StatusNotice
-          title="Prototype mode"
-          body="Any 6-digit code works here — production will verify the real SMS code."
+          error={verifyError ?? undefined}
         />
         <View style={{ alignItems: 'center' }}>
           <TextButton
-            label={resent ? 'Code resent' : 'Resend code'}
-            onPress={() => setResent(true)}
+            label={resendBusy ? 'Sending...' : resent ? 'Code resent' : 'Resend code'}
+            onPress={() => { onResend(); setResent(true); }}
             tone="secondary"
           />
         </View>
