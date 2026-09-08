@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import * as Linking from 'expo-linking';
 import { Animated, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,8 +10,8 @@ import { BusinessProfileScreen } from '../screens/BusinessProfileScreen';
 import { BusinessVerificationScreen } from '../screens/BusinessVerificationScreen';
 import { BusinessOnboardingScreen } from '../screens/BusinessOnboardingScreen';
 import { ContactScreen, type ContactMethod } from '../screens/ContactScreen';
-import { signInWithGoogle, verifyEmailOtp, verifyPhoneOtp, restoreAuthSession, signOut } from '../features/auth/session';
-import { sendEmailOtp, sendPhoneOtp } from '../features/auth/otpAuth';
+import { signInWithGoogle, verifyPhoneOtp, restoreAuthSession, signOut } from '../features/auth/session';
+import { sendEmailMagicLink, sendPhoneOtp, sessionFromRedirectUrl } from '../features/auth/otpAuth';
 import { ConversationScreen } from '../screens/ConversationScreen';
 import { DiscoverScreen } from '../screens/DiscoverScreen';
 import { EnquiriesScreen } from '../screens/EnquiriesScreen';
@@ -20,6 +21,7 @@ import { InboxScreen } from '../screens/InboxScreen';
 // import { JobSeekerOnboardingScreen } from '../screens/JobSeekerOnboardingScreen';
 import { MatchScreen } from '../screens/MatchScreen';
 import { OpportunitiesScreen } from '../screens/OpportunitiesScreen';
+import { MagicLinkSentScreen } from '../screens/MagicLinkSentScreen';
 import { OtpScreen } from '../screens/OtpScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { SearchResultsScreen } from '../screens/SearchResultsScreen';
@@ -42,6 +44,7 @@ type Route =
   | { name: 'welcome' }
   | { name: 'contact' }
   | { name: 'otp' }
+  | { name: 'magic-link-sent' }
   | { name: 'business-onboarding' }
   | { name: 'business-verification'; source: 'onboarding' | 'gate' | 'profile' }
   // Job-seeker-only routes disabled — Binder is business-only for now.
@@ -97,6 +100,7 @@ export function AppNavigator() {
   const [contact, setContact] = useState<{ method: ContactMethod; identifier: string } | null>(null);
   const [googleBusy, setGoogleBusy] = useState(false);
   const [sendBusy, setSendBusy] = useState(false);
+  const [resent, setResent] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [verifyBusy, setVerifyBusy] = useState(false);
   const [verifyError, setVerifyError] = useState<string | null>(null);
@@ -129,6 +133,23 @@ export function AppNavigator() {
       }
     };
     void restoreSession();
+  }, []);
+
+  useEffect(() => {
+    // A tapped magic link re-opens the app at the redirect URL with tokens
+    // attached. Cold start arrives via getInitialURL, a warm app via the event.
+    const consume = async (url: string | null) => {
+      if (!url) return;
+      try {
+        const authSession = await sessionFromRedirectUrl(url);
+        if (authSession) await enterAppAfterAuth(authSession);
+      } catch (err) {
+        setVerifyError(err instanceof Error ? err.message : 'That sign-in link is no longer valid. Request a new one.');
+      }
+    };
+    void Linking.getInitialURL().then(consume);
+    const subscription = Linking.addEventListener('url', ({ url }) => void consume(url));
+    return () => subscription.remove();
   }, []);
 
   const route = stack[stack.length - 1];
@@ -199,12 +220,13 @@ export function AppNavigator() {
     setSendError(null);
     try {
       if (method === 'phone') await sendPhoneOtp(identifier);
-      else await sendEmailOtp(identifier);
+      else await sendEmailMagicLink(identifier);
       setContact({ method, identifier });
       setVerifyError(null);
-      push({ name: 'otp' });
+      setResent(false);
+      push({ name: method === 'phone' ? 'otp' : 'magic-link-sent' });
     } catch (err) {
-      setSendError(err instanceof Error ? err.message : 'Could not send the code. Try again.');
+      setSendError(err instanceof Error ? err.message : method === 'phone' ? 'Could not send the code. Try again.' : 'Could not send the sign-in link. Try again.');
     } finally {
       setSendBusy(false);
     }
@@ -214,10 +236,7 @@ export function AppNavigator() {
     setVerifyBusy(true);
     setVerifyError(null);
     try {
-      const result = contact.method === 'phone'
-        ? await verifyPhoneOtp(contact.identifier, code)
-        : await verifyEmailOtp(contact.identifier, code);
-      await enterAppAfterAuth(result);
+      await enterAppAfterAuth(await verifyPhoneOtp(contact.identifier, code));
     } catch (err) {
       setVerifyError(err instanceof Error ? err.message : 'Invalid code. Try again.');
     } finally {
@@ -229,9 +248,10 @@ export function AppNavigator() {
     setResendBusy(true);
     try {
       if (contact.method === 'phone') await sendPhoneOtp(contact.identifier);
-      else await sendEmailOtp(contact.identifier);
+      else await sendEmailMagicLink(contact.identifier);
+      setResent(true);
     } catch (err) {
-      setVerifyError(err instanceof Error ? err.message : 'Could not resend the code.');
+      setVerifyError(err instanceof Error ? err.message : 'Could not resend it.');
     } finally {
       setResendBusy(false);
     }
@@ -261,7 +281,7 @@ export function AppNavigator() {
     return (
       <ContactScreen
         onBack={() => reset({ name: 'welcome' })}
-        onSendCode={handleSendCode}
+        onSubmit={handleSendCode}
         sendBusy={sendBusy}
         sendError={sendError}
         onGoogleContinue={handleGoogleContinue}
@@ -273,7 +293,6 @@ export function AppNavigator() {
   if (route.name === 'otp' && contact) {
     return (
       <OtpScreen
-        method={contact.method}
         identifier={contact.identifier}
         onBack={pop}
         onVerify={handleVerifyCode}
@@ -281,6 +300,19 @@ export function AppNavigator() {
         verifyError={verifyError}
         onResend={handleResendCode}
         resendBusy={resendBusy}
+      />
+    );
+  }
+
+  if (route.name === 'magic-link-sent' && contact) {
+    return (
+      <MagicLinkSentScreen
+        email={contact.identifier}
+        onBack={pop}
+        onResend={handleResendCode}
+        resendBusy={resendBusy}
+        resent={resent}
+        error={verifyError}
       />
     );
   }

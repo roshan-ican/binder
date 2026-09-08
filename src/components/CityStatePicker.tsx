@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Modal, ScrollView, View } from 'react-native';
-import { indiaStatesWithCities } from '../data/indiaLocations';
+import { getCountry, type CountryCode } from '../data/countries';
 import { colors, radius, size, spacing } from '../theme';
 import { AnimatedPressable } from './AnimatedPressable';
 import { Button } from './Button';
@@ -11,23 +11,27 @@ import { Text } from './Text';
 export function CityStatePicker({
   city,
   state,
+  countryCode,
   onChange,
   error,
 }: {
   city: string;
   state: string;
+  countryCode: CountryCode;
   onChange: (value: { city: string; state: string }) => void;
   error?: string;
 }) {
+  const country = getCountry(countryCode);
+  const regions = country.regions;
   const [open, setOpen] = useState(false);
   const [activeState, setActiveState] = useState<string | null>(null);
   const [query, setQuery] = useState('');
-  const activeStateEntry = indiaStatesWithCities.find((entry) => entry.state === activeState);
+  const activeStateEntry = regions.find((entry) => entry.state === activeState);
 
   const searchResults = useMemo(() => {
     const term = query.trim().toLowerCase();
     if (!term) return [];
-    return indiaStatesWithCities.flatMap((entry) => entry.cities
+    return regions.flatMap((entry) => entry.cities
       .filter((city) => city.toLowerCase().includes(term) || entry.state.toLowerCase().includes(term))
       .map((city) => ({ city, state: entry.state })));
   }, [query]);
@@ -40,9 +44,9 @@ export function CityStatePicker({
 
   return (
     <View style={{ gap: spacing[2] }}>
-      <Text variant="label" tone="secondary">City &amp; state</Text>
+      <Text variant="label" tone="secondary">City &amp; {country.regionLabel.toLowerCase()}</Text>
       <Button
-        label={city && state ? `${city}, ${state}` : 'Choose city & state'}
+        label={city && state ? `${city}, ${state}` : `Choose city & ${country.regionLabel.toLowerCase()}`}
         variant="secondary"
         onPress={() => setOpen(true)}
       />
@@ -52,11 +56,11 @@ export function CityStatePicker({
         <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.68)' }}>
           <View style={{ height: '88%', backgroundColor: colors.bg.raised, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg, padding: spacing[5], gap: spacing[4] }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[3] }}>
-              {activeStateEntry ? <AnimatedPressable accessibilityRole="button" accessibilityLabel="Back to states" onPress={() => setActiveState(null)} hitSlop={spacing[2]}><Icon name="arrowLeft" color={colors.text.primary} /></AnimatedPressable> : null}
-              <Text variant="heading3" style={{ flex: 1 }}>{activeStateEntry?.state ?? 'Choose state'}</Text>
-              <AnimatedPressable accessibilityRole="button" accessibilityLabel="Close city and state picker" onPress={close} hitSlop={spacing[2]}><Text variant="labelLarge" tone="secondary">Close</Text></AnimatedPressable>
+              {activeStateEntry ? <AnimatedPressable accessibilityRole="button" accessibilityLabel={`Back to ${country.regionLabelPlural.toLowerCase()}`} onPress={() => setActiveState(null)} hitSlop={spacing[2]}><Icon name="arrowLeft" color={colors.text.primary} /></AnimatedPressable> : null}
+              <Text variant="heading3" style={{ flex: 1 }}>{activeStateEntry?.state ?? `Choose ${country.regionLabel.toLowerCase()}`}</Text>
+              <AnimatedPressable accessibilityRole="button" accessibilityLabel="Close city picker" onPress={close} hitSlop={spacing[2]}><Text variant="labelLarge" tone="secondary">Close</Text></AnimatedPressable>
             </View>
-            {!activeStateEntry ? <Input label="Search states or cities" value={query} onChangeText={setQuery} placeholder="Kanpur, Maharashtra..." /> : null}
+            {!activeStateEntry ? <Input label={`Search ${country.regionLabelPlural.toLowerCase()} or cities`} value={query} onChangeText={setQuery} placeholder={country.searchPlaceholder} /> : null}
             <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: spacing[5] }}>
               {query.trim()
                 ? searchResults.map(({ city: resultCity, state: resultState }) => (
@@ -77,7 +81,7 @@ export function CityStatePicker({
                       onPress={() => select(entryCity, activeStateEntry.state)}
                     />
                   ))
-                  : indiaStatesWithCities.map((entry) => (
+                  : regions.map((entry) => (
                     <AnimatedPressable
                       key={entry.state}
                       accessibilityRole="button"
@@ -92,7 +96,7 @@ export function CityStatePicker({
                       <Icon name="chevronRight" size={size.iconSm} color={colors.text.tertiary} />
                     </AnimatedPressable>
                   ))}
-              {query.trim() && !searchResults.length ? <Text variant="body" tone="secondary" style={{ paddingVertical: spacing[6] }}>No matching city or state found.</Text> : null}
+              {query.trim() && !searchResults.length ? <Text variant="body" tone="secondary" style={{ paddingVertical: spacing[6] }}>No matching city found.</Text> : null}
             </ScrollView>
           </View>
         </View>

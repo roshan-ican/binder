@@ -2,13 +2,11 @@ import { useState } from 'react';
 import { View } from 'react-native';
 import { BackHeader, Button, Input, Screen, ScreenHeading, TextButton } from '../components';
 import { spacing } from '../theme';
-import type { ContactMethod } from './ContactScreen';
 
 const CODE_LENGTH = 6;
 
-/** Verifies the phone/email code sent from ContactScreen before onboarding continues. */
+/** Verifies the SMS code sent from ContactScreen. Email sign-in uses a magic link instead. */
 export function OtpScreen({
-  method,
   identifier,
   onBack,
   onVerify,
@@ -17,8 +15,7 @@ export function OtpScreen({
   onResend,
   resendBusy,
 }: {
-  method: ContactMethod;
-  /** Display-ready value the code was sent to — a +91-prefixed phone or an email address. */
+  /** Display-ready value the code was sent to — a +91-prefixed phone number. */
   identifier: string;
   onBack: () => void;
   onVerify: (code: string) => void;
@@ -41,7 +38,7 @@ export function OtpScreen({
       <View style={{ flex: 1, justifyContent: 'center', gap: spacing[8] }}>
         <ScreenHeading
           title="Enter the code"
-          supporting={`We sent a ${CODE_LENGTH}-digit code ${method === 'phone' ? 'to' : 'to your email'} ${identifier}.`}
+          supporting={`We sent a ${CODE_LENGTH}-digit code to ${identifier}.`}
         />
         <Input
           label="Verification code"

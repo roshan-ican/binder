@@ -1,7 +1,7 @@
 import { supabase } from '../../lib/supabase';
 
 export { signInWithGoogle } from './googleAuth';
-export { verifyEmailOtp, verifyPhoneOtp } from './otpAuth';
+export { sendEmailMagicLink, sendPhoneOtp, sessionFromRedirectUrl, verifyPhoneOtp } from './otpAuth';
 
 /** Supabase owns authentication; Go account sync is a separate business operation. */
 export async function restoreAuthSession() {

@@ -11,14 +11,14 @@ export type ContactMethod = 'phone' | 'email';
 /** First identity step for both buyers and sellers — same form either way. */
 export function ContactScreen({
   onBack,
-  onSendCode,
+  onSubmit,
   sendBusy,
   sendError,
   onGoogleContinue,
   googleBusy,
 }: {
   onBack: () => void;
-  onSendCode: (input: { method: ContactMethod; identifier: string }) => void;
+  onSubmit: (input: { method: ContactMethod; identifier: string }) => void;
   sendBusy?: boolean;
   sendError?: string | null;
   onGoogleContinue: () => void;
@@ -34,9 +34,9 @@ export function ContactScreen({
 
   const submit = () => {
     if (method === 'phone') {
-      onSendCode({ method: 'phone', identifier: `+91${phone.replace(/\s+/g, '')}` });
+      onSubmit({ method: 'phone', identifier: `+91${phone.replace(/\s+/g, '')}` });
     } else {
-      onSendCode({ method: 'email', identifier: email.trim() });
+      onSubmit({ method: 'email', identifier: email.trim() });
     }
   };
 
@@ -44,13 +44,13 @@ export function ContactScreen({
     <Screen
       density="hero"
       scroll={false}
-      footer={<Button label="Send code" disabled={!valid} loading={sendBusy} onPress={submit} />}
+      footer={<Button label={method === 'phone' ? 'Send code' : 'Email me a sign-in link'} disabled={!valid} loading={sendBusy} onPress={submit} />}
     >
       <BackHeader onBack={onBack} />
       <View style={{ flex: 1, justifyContent: 'center', gap: spacing[8] }}>
         <ScreenHeading
           title="How can we reach you?"
-          supporting="We'll send a one-time code to verify it's you."
+          supporting={method === 'phone' ? "We'll text you a one-time code to verify it's you." : "We'll email you a sign-in link — no password to remember."}
         />
         <View style={{ gap: spacing[5] }}>
           <View style={{ flexDirection: 'row', gap: spacing[2] }}>
@@ -74,6 +74,7 @@ export function ContactScreen({
               onChangeText={(value) => setEmail(value.toLowerCase())}
               keyboardType="email-address"
               placeholder="you@company.com"
+              helper="We'll send a link you tap to sign in."
             />
           )}
           {sendError ? (

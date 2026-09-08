@@ -160,7 +160,8 @@ export function BusinessProfileEditorScreen({
       acceptsOrdersFrom,
       tradeIntent: profile?.tradeIntent ?? me.tradeIntent,
       verificationStatus: profile?.verificationStatus ?? "unverified",
-      gstin: profile?.gstin,
+      taxId: profile?.taxId,
+      countryCode: profile?.countryCode ?? me.countryCode,
     });
   return (
     <Screen footer={<Button label="Save profile" onPress={save} />}>

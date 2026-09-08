@@ -1,5 +1,6 @@
 import type { MatchQuality } from '../components/MatchLabel';
 import type { TrustSignal } from '../components/TrustBadge';
+import type { CountryCode } from './countries';
 
 export type Business = {
   id: string;
@@ -46,7 +47,9 @@ export type BuyerAudience = 'businesses-only' | 'businesses-and-individuals';
 export type TradeIntent = 'buyer' | 'seller' | 'both';
 
 export type BusinessProfileData = {
-  gstin?: string;
+  /** Business registration number, whatever the country calls it (GSTIN, TRN, ...). */
+  taxId?: string;
+  countryCode: CountryCode;
   businessName: string;
   contactName: string;
   industry: string;
@@ -100,7 +103,8 @@ export const me = {
   industry: 'Fashion & Apparel',
   industries: ['Fashion & Apparel', 'Textiles'],
   city: 'Kanpur',
-  region: 'Uttar Pradesh, India',
+  region: 'Uttar Pradesh',
+  countryCode: 'IN' as CountryCode,
   offers: ['Manufacturer', 'Distributor'],
   needs: ['Packaging', 'Logistics'],
   acceptsOrdersFrom: 'businesses-and-individuals' as BuyerAudience,

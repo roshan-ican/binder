@@ -20,6 +20,7 @@ import {
   type JobSeekerProfileData,
   type UserRole,
 } from "../data/mock";
+import { defaultCountryCode, getCountry } from "../data/countries";
 import { professions, roles, skills, taxonomyLabel } from "../data/jobTaxonomy";
 import { rhythm, spacing } from "../theme";
 
@@ -195,8 +196,8 @@ export function ProfileScreen({
                 ? `${jobSeekerProfile.email} · email verified`
                 : "Phone · verified 12 Aug 2026"
               : businessProfile?.verificationStatus === "verified"
-                ? `GSTIN ${businessProfile.gstin}`
-                : "Unverified business · GST can be added later"
+                ? `${getCountry(businessProfile.countryCode).taxId.label} ${businessProfile.taxId}`
+                : `Unverified business · ${getCountry(businessProfile?.countryCode ?? defaultCountryCode).taxId.label} can be added later`
           }
         />
         {!isJobSeeker && businessProfile?.verificationStatus !== "verified" ? (
