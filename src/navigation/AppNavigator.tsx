@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import * as Linking from 'expo-linking';
+// Login + onboarding disabled — the app opens straight into the tabs for now.
+// import * as Linking from 'expo-linking';
 import { Animated, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,10 +9,13 @@ import type { BusinessProfileData, JobSeekerProfileData, TradeIntent, UserRole }
 import { colors, motion } from '../theme';
 import { BusinessProfileScreen } from '../screens/BusinessProfileScreen';
 import { BusinessVerificationScreen } from '../screens/BusinessVerificationScreen';
-import { BusinessOnboardingScreen } from '../screens/BusinessOnboardingScreen';
-import { ContactScreen, type ContactMethod } from '../screens/ContactScreen';
-import { signInWithGoogle, verifyPhoneOtp, restoreAuthSession, signOut } from '../features/auth/session';
-import { sendEmailMagicLink, sendPhoneOtp, sessionFromRedirectUrl } from '../features/auth/otpAuth';
+// Login + onboarding screens disabled — re-enable with the routes below.
+// import { BusinessOnboardingScreen } from '../screens/BusinessOnboardingScreen';
+// import { ContactScreen, type ContactMethod } from '../screens/ContactScreen';
+// import { signInWithGoogle, verifyPhoneOtp, restoreAuthSession } from '../features/auth/session';
+// import { sendEmailMagicLink, sendPhoneOtp, sessionFromRedirectUrl } from '../features/auth/otpAuth';
+// Sign-out stays wired so the account screen can still clear local state.
+import { signOut } from '../features/auth/session';
 import { ConversationScreen } from '../screens/ConversationScreen';
 import { DiscoverScreen } from '../screens/DiscoverScreen';
 import { EnquiriesScreen } from '../screens/EnquiriesScreen';
@@ -21,11 +25,12 @@ import { InboxScreen } from '../screens/InboxScreen';
 // import { JobSeekerOnboardingScreen } from '../screens/JobSeekerOnboardingScreen';
 import { MatchScreen } from '../screens/MatchScreen';
 import { OpportunitiesScreen } from '../screens/OpportunitiesScreen';
-import { MagicLinkSentScreen } from '../screens/MagicLinkSentScreen';
-import { OtpScreen } from '../screens/OtpScreen';
+// Login-only screens disabled.
+// import { MagicLinkSentScreen } from '../screens/MagicLinkSentScreen';
+// import { OtpScreen } from '../screens/OtpScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { SearchResultsScreen } from '../screens/SearchResultsScreen';
-import { WelcomeScreen } from '../screens/WelcomeScreen';
+// import { WelcomeScreen } from '../screens/WelcomeScreen';
 import { EnquiryFlowScreen } from '../screens/EnquiryFlowScreen';
 import { SwapDetailScreen } from '../screens/SwapDetailScreen';
 import { SwapListingFlowScreen } from '../screens/SwapListingFlowScreen';
@@ -33,7 +38,8 @@ import { SwapsScreen } from '../screens/SwapsScreen';
 import { BusinessDocumentsScreen, BusinessProfileEditorScreen, SavedBusinessesScreen, TeamScreen } from '../screens/BusinessManagementScreens';
 // Job-seeker-only screens disabled — Binder is business-only for now.
 // import { ApplicationDetailScreen, ApplyFlowScreen, CandidateDocumentsScreen, CandidateProfileEditorScreen, JobDetailScreen, SavedJobsScreen } from '../screens/JobFlowScreens';
-import { AccountPrivacyScreen, ConversationDetailsScreen, NotificationPreferencesScreen, SavedSearchesScreen, SettingsHubScreen, SignInScreen, StateGalleryScreen } from '../screens/SharedScreens';
+// SignInScreen dropped from this import — login is disabled.
+import { AccountPrivacyScreen, ConversationDetailsScreen, NotificationPreferencesScreen, SavedSearchesScreen, SettingsHubScreen, StateGalleryScreen } from '../screens/SharedScreens';
 
 /**
  * A deliberately small navigator. The prototype covers the three V1 journeys
@@ -41,11 +47,12 @@ import { AccountPrivacyScreen, ConversationDetailsScreen, NotificationPreference
  * react-navigation when the real routes land.
  */
 type Route =
-  | { name: 'welcome' }
-  | { name: 'contact' }
-  | { name: 'otp' }
-  | { name: 'magic-link-sent' }
-  | { name: 'business-onboarding' }
+  // Login + onboarding routes disabled — Binder opens straight into the tabs.
+  // | { name: 'welcome' }
+  // | { name: 'contact' }
+  // | { name: 'otp' }
+  // | { name: 'magic-link-sent' }
+  // | { name: 'business-onboarding' }
   | { name: 'business-verification'; source: 'onboarding' | 'gate' | 'profile' }
   // Job-seeker-only routes disabled — Binder is business-only for now.
   // | { name: 'job-seeker-onboarding' }
@@ -55,7 +62,7 @@ type Route =
   | { name: 'enquiry'; id: string }
   | { name: 'opportunities' }
   | { name: 'conversation'; id: string }
-  | { name: 'sign-in' }
+  // | { name: 'sign-in' }
   | { name: 'enquiry-compose'; mode: 'create' | 'edit' }
   | { name: 'swap'; id: string }
   | { name: 'swap-compose'; mode: 'create' | 'edit' }
@@ -89,68 +96,73 @@ type StoredSession = {
 
 export function AppNavigator() {
   const insets = useSafeAreaInsets();
-  const [stack, setStack] = useState<Route[]>([{ name: 'welcome' }]);
+  // Login + onboarding disabled — start on the tabs instead of the welcome screen.
+  const [stack, setStack] = useState<Route[]>([{ name: 'tabs' }]);
   const authUserId = useRef<string | null>(null);
-  const [sessionReady, setSessionReady] = useState(false);
+  // Nothing to restore while auth is off, so the shell is ready immediately.
+  const [sessionReady] = useState(true);
   const [tab, setTab] = useState<TabKey>('match');
   const [query, setQuery] = useState('');
   const [role, setRole] = useState<UserRole>('business');
-  const [tradeIntent, setTradeIntent] = useState<TradeIntent | null>(null);
+  // Login + onboarding state disabled alongside the routes that consume it.
+  // const [tradeIntent, setTradeIntent] = useState<TradeIntent | null>(null);
   const [businessProfile, setBusinessProfile] = useState<BusinessProfileData | null>(null);
-  const [contact, setContact] = useState<{ method: ContactMethod; identifier: string } | null>(null);
-  const [googleBusy, setGoogleBusy] = useState(false);
-  const [sendBusy, setSendBusy] = useState(false);
-  const [resent, setResent] = useState(false);
-  const [sendError, setSendError] = useState<string | null>(null);
-  const [verifyBusy, setVerifyBusy] = useState(false);
-  const [verifyError, setVerifyError] = useState<string | null>(null);
-  const [resendBusy, setResendBusy] = useState(false);
+  // const [contact, setContact] = useState<{ method: ContactMethod; identifier: string } | null>(null);
+  // const [googleBusy, setGoogleBusy] = useState(false);
+  // const [sendBusy, setSendBusy] = useState(false);
+  // const [resent, setResent] = useState(false);
+  // const [sendError, setSendError] = useState<string | null>(null);
+  // const [verifyBusy, setVerifyBusy] = useState(false);
+  // const [verifyError, setVerifyError] = useState<string | null>(null);
+  // const [resendBusy, setResendBusy] = useState(false);
   const [jobSeekerProfile, setJobSeekerProfile] = useState<JobSeekerProfileData | null>(null);
   const [jobSwipeCreditsUsed, setJobSwipeCreditsUsed] = useState(0);
   const [businessSwipeCreditsUsed, setBusinessSwipeCreditsUsed] = useState(0);
   const [trustGateOpen, setTrustGateOpen] = useState(false);
   const pendingTrustAction = useRef<null | (() => void)>(null);
 
-  useEffect(() => {
-    const restoreSession = async () => {
-      try {
-        const authSession = await restoreAuthSession();
-        if (!authSession) return;
-        authUserId.current = authSession.user.id;
-        const stored = await AsyncStorage.getItem(`${sessionStorageKey}:${authSession.user.id}`);
-        const local = stored ? JSON.parse(stored) as StoredSession : null;
-        if (local?.userId === authSession.user.id && (local.role === 'business' || local.role === 'job-seeker')) {
-          setRole(local.role);
-          setBusinessProfile(local.businessProfile ?? null);
-          setStack([{ name: 'tabs' }]);
-        } else {
-          setStack([{ name: 'business-onboarding' }]);
-        }
-      } catch {
-        // A malformed or unavailable local session should never block entry.
-      } finally {
-        setSessionReady(true);
-      }
-    };
-    void restoreSession();
-  }, []);
+  // Session restore disabled — no sign-in means nothing to restore or gate on.
+  // useEffect(() => {
+  //   const restoreSession = async () => {
+  //     try {
+  //       const authSession = await restoreAuthSession();
+  //       if (!authSession) return;
+  //       authUserId.current = authSession.user.id;
+  //       const stored = await AsyncStorage.getItem(`${sessionStorageKey}:${authSession.user.id}`);
+  //       const local = stored ? JSON.parse(stored) as StoredSession : null;
+  //       if (local?.userId === authSession.user.id && (local.role === 'business' || local.role === 'job-seeker')) {
+  //         setRole(local.role);
+  //         setBusinessProfile(local.businessProfile ?? null);
+  //         setStack([{ name: 'tabs' }]);
+  //       } else {
+  //         setStack([{ name: 'business-onboarding' }]);
+  //       }
+  //     } catch {
+  //       // A malformed or unavailable local session should never block entry.
+  //     } finally {
+  //       setSessionReady(true);
+  //     }
+  //   };
+  //   void restoreSession();
+  // }, []);
 
-  useEffect(() => {
-    // A tapped magic link re-opens the app at the redirect URL with tokens
-    // attached. Cold start arrives via getInitialURL, a warm app via the event.
-    const consume = async (url: string | null) => {
-      if (!url) return;
-      try {
-        const authSession = await sessionFromRedirectUrl(url);
-        if (authSession) await enterAppAfterAuth(authSession);
-      } catch (err) {
-        setVerifyError(err instanceof Error ? err.message : 'That sign-in link is no longer valid. Request a new one.');
-      }
-    };
-    void Linking.getInitialURL().then(consume);
-    const subscription = Linking.addEventListener('url', ({ url }) => void consume(url));
-    return () => subscription.remove();
-  }, []);
+  // Magic-link deep linking disabled with the rest of the login flow.
+  // useEffect(() => {
+  //   // A tapped magic link re-opens the app at the redirect URL with tokens
+  //   // attached. Cold start arrives via getInitialURL, a warm app via the event.
+  //   const consume = async (url: string | null) => {
+  //     if (!url) return;
+  //     try {
+  //       const authSession = await sessionFromRedirectUrl(url);
+  //       if (authSession) await enterAppAfterAuth(authSession);
+  //     } catch (err) {
+  //       setVerifyError(err instanceof Error ? err.message : 'That sign-in link is no longer valid. Request a new one.');
+  //     }
+  //   };
+  //   void Linking.getInitialURL().then(consume);
+  //   const subscription = Linking.addEventListener('url', ({ url }) => void consume(url));
+  //   return () => subscription.remove();
+  // }, []);
 
   const route = stack[stack.length - 1];
   const push = (next: Route) => setStack((current) => [...current, next]);
@@ -167,163 +179,170 @@ export function AppNavigator() {
       authUserId.current = null;
       setBusinessProfile(null);
       setJobSeekerProfile(null);
-      setTradeIntent(null);
-      setContact(null);
-      setSendError(null);
-      setVerifyError(null);
+      // setTradeIntent(null);
+      // setContact(null);
+      // setSendError(null);
+      // setVerifyError(null);
       setRole('business');
       setTrustGateOpen(false);
       pendingTrustAction.current = null;
-      reset({ name: 'welcome' });
+      // Login disabled — signing out just clears local state and stays in the app.
+      reset({ name: 'tabs' });
     } catch {
-      setSendError('Could not sign out. Please try again.');
-      reset({ name: 'contact' });
+      // setSendError('Could not sign out. Please try again.');
+      reset({ name: 'tabs' });
     }
   };
   const runTrustAction = (action: () => void) => {
-    if (role !== 'business' || businessProfile?.verificationStatus === 'verified') return action();
-    pendingTrustAction.current = action;
-    setTrustGateOpen(true);
+    // Onboarding disabled — without a business profile the gate would block every
+    // action, so run it straight through until onboarding is re-enabled.
+    return action();
+    // if (role !== 'business' || businessProfile?.verificationStatus === 'verified') return action();
+    // pendingTrustAction.current = action;
+    // setTrustGateOpen(true);
   };
-  /** Local onboarding state is scoped to the signed-in user, never an authorization source. */
-  const enterAppAfterAuth = async (session: { user: { id: string } }) => {
-    authUserId.current = session.user.id;
-    let local: StoredSession | null = null;
-    try {
-      const stored = await AsyncStorage.getItem(`${sessionStorageKey}:${session.user.id}`);
-      local = stored ? JSON.parse(stored) as StoredSession : null;
-    } catch { /* Missing prototype data starts onboarding. */ }
-    setBusinessProfile(null);
-    setRole('business');
-    if (local?.userId === session.user.id && (local.role === 'business' || local.role === 'job-seeker')) {
-      setRole(local.role);
-      setBusinessProfile(local.businessProfile ?? null);
-      setTab('match');
-      reset({ name: 'tabs' });
-    } else {
-      reset({ name: 'business-onboarding' });
-    }
-  };
-  const handleGoogleContinue = async () => {
-    setGoogleBusy(true);
-    setSendError(null);
-    try {
-      await enterAppAfterAuth(await signInWithGoogle());
-    } catch (err) {
-      setSendError(err instanceof Error ? err.message : 'Could not sign in with Google. Please try again.');
-    } finally {
-      setGoogleBusy(false);
-    }
-  };
-  const handleSendCode = async ({ method, identifier }: { method: ContactMethod; identifier: string }) => {
-    setSendBusy(true);
-    setSendError(null);
-    try {
-      if (method === 'phone') await sendPhoneOtp(identifier);
-      else await sendEmailMagicLink(identifier);
-      setContact({ method, identifier });
-      setVerifyError(null);
-      setResent(false);
-      push({ name: method === 'phone' ? 'otp' : 'magic-link-sent' });
-    } catch (err) {
-      setSendError(err instanceof Error ? err.message : method === 'phone' ? 'Could not send the code. Try again.' : 'Could not send the sign-in link. Try again.');
-    } finally {
-      setSendBusy(false);
-    }
-  };
-  const handleVerifyCode = async (code: string) => {
-    if (!contact) return;
-    setVerifyBusy(true);
-    setVerifyError(null);
-    try {
-      await enterAppAfterAuth(await verifyPhoneOtp(contact.identifier, code));
-    } catch (err) {
-      setVerifyError(err instanceof Error ? err.message : 'Invalid code. Try again.');
-    } finally {
-      setVerifyBusy(false);
-    }
-  };
-  const handleResendCode = async () => {
-    if (!contact) return;
-    setResendBusy(true);
-    try {
-      if (contact.method === 'phone') await sendPhoneOtp(contact.identifier);
-      else await sendEmailMagicLink(contact.identifier);
-      setResent(true);
-    } catch (err) {
-      setVerifyError(err instanceof Error ? err.message : 'Could not resend it.');
-    } finally {
-      setResendBusy(false);
-    }
-  };
+  // Login handlers disabled — nothing signs in while the flow is off.
+  // /** Local onboarding state is scoped to the signed-in user, never an authorization source. */
+  // const enterAppAfterAuth = async (session: { user: { id: string } }) => {
+    // authUserId.current = session.user.id;
+    // let local: StoredSession | null = null;
+    // try {
+      // const stored = await AsyncStorage.getItem(`${sessionStorageKey}:${session.user.id}`);
+      // local = stored ? JSON.parse(stored) as StoredSession : null;
+    // } catch { /* Missing prototype data starts onboarding. */ }
+    // setBusinessProfile(null);
+    // setRole('business');
+    // if (local?.userId === session.user.id && (local.role === 'business' || local.role === 'job-seeker')) {
+      // setRole(local.role);
+      // setBusinessProfile(local.businessProfile ?? null);
+      // setTab('match');
+      // reset({ name: 'tabs' });
+    // } else {
+      // reset({ name: 'business-onboarding' });
+    // }
+  // };
+  // const handleGoogleContinue = async () => {
+    // setGoogleBusy(true);
+    // setSendError(null);
+    // try {
+      // await enterAppAfterAuth(await signInWithGoogle());
+    // } catch (err) {
+      // setSendError(err instanceof Error ? err.message : 'Could not sign in with Google. Please try again.');
+    // } finally {
+      // setGoogleBusy(false);
+    // }
+  // };
+  // const handleSendCode = async ({ method, identifier }: { method: ContactMethod; identifier: string }) => {
+    // setSendBusy(true);
+    // setSendError(null);
+    // try {
+      // if (method === 'phone') await sendPhoneOtp(identifier);
+      // else await sendEmailMagicLink(identifier);
+      // setContact({ method, identifier });
+      // setVerifyError(null);
+      // setResent(false);
+      // push({ name: method === 'phone' ? 'otp' : 'magic-link-sent' });
+    // } catch (err) {
+      // setSendError(err instanceof Error ? err.message : method === 'phone' ? 'Could not send the code. Try again.' : 'Could not send the sign-in link. Try again.');
+    // } finally {
+      // setSendBusy(false);
+    // }
+  // };
+  // const handleVerifyCode = async (code: string) => {
+    // if (!contact) return;
+    // setVerifyBusy(true);
+    // setVerifyError(null);
+    // try {
+      // await enterAppAfterAuth(await verifyPhoneOtp(contact.identifier, code));
+    // } catch (err) {
+      // setVerifyError(err instanceof Error ? err.message : 'Invalid code. Try again.');
+    // } finally {
+      // setVerifyBusy(false);
+    // }
+  // };
+  // const handleResendCode = async () => {
+    // if (!contact) return;
+    // setResendBusy(true);
+    // try {
+      // if (contact.method === 'phone') await sendPhoneOtp(contact.identifier);
+      // else await sendEmailMagicLink(contact.identifier);
+      // setResent(true);
+    // } catch (err) {
+      // setVerifyError(err instanceof Error ? err.message : 'Could not resend it.');
+    // } finally {
+      // setResendBusy(false);
+    // }
+  // };
 
   if (!sessionReady) {
     return <View style={{ flex: 1, backgroundColor: colors.bg.primary }} />;
   }
 
-  if (route.name === 'welcome') {
-    return (
-      <WelcomeScreen
-        onSelectRole={(nextRole, intent) => {
-          setRole(nextRole);
-          setTradeIntent(intent);
-          // Job-seeker path disabled — Binder is business-only for now.
-          // reset({ name: nextRole === 'business' ? 'contact' : 'job-seeker-onboarding' });
-          reset({ name: 'contact' });
-        }}
-        onExplore={() => { setTab('discover'); reset({ name: 'tabs' }); }}
-        onSignIn={() => push({ name: 'sign-in' })}
-      />
-    );
-  }
+  // Login + onboarding routes disabled — uncomment this block, its handlers, its
+  // state and its imports to bring the sign-in flow back.
+  // if (route.name === 'welcome') {
+    // return (
+      // <WelcomeScreen
+        // onSelectRole={(nextRole, intent) => {
+          // setRole(nextRole);
+          // setTradeIntent(intent);
+          // // Job-seeker path disabled — Binder is business-only for now.
+          // // reset({ name: nextRole === 'business' ? 'contact' : 'job-seeker-onboarding' });
+          // reset({ name: 'contact' });
+        // }}
+        // onExplore={() => { setTab('discover'); reset({ name: 'tabs' }); }}
+        // onSignIn={() => push({ name: 'sign-in' })}
+      // />
+    // );
+  // }
 
-  if (route.name === 'contact') {
-    return (
-      <ContactScreen
-        onBack={() => reset({ name: 'welcome' })}
-        onSubmit={handleSendCode}
-        sendBusy={sendBusy}
-        sendError={sendError}
-        onGoogleContinue={handleGoogleContinue}
-        googleBusy={googleBusy}
-      />
-    );
-  }
+  // if (route.name === 'contact') {
+    // return (
+      // <ContactScreen
+        // onBack={() => reset({ name: 'welcome' })}
+        // onSubmit={handleSendCode}
+        // sendBusy={sendBusy}
+        // sendError={sendError}
+        // onGoogleContinue={handleGoogleContinue}
+        // googleBusy={googleBusy}
+      // />
+    // );
+  // }
 
-  if (route.name === 'otp' && contact) {
-    return (
-      <OtpScreen
-        identifier={contact.identifier}
-        onBack={pop}
-        onVerify={handleVerifyCode}
-        verifyBusy={verifyBusy}
-        verifyError={verifyError}
-        onResend={handleResendCode}
-        resendBusy={resendBusy}
-      />
-    );
-  }
+  // if (route.name === 'otp' && contact) {
+    // return (
+      // <OtpScreen
+        // identifier={contact.identifier}
+        // onBack={pop}
+        // onVerify={handleVerifyCode}
+        // verifyBusy={verifyBusy}
+        // verifyError={verifyError}
+        // onResend={handleResendCode}
+        // resendBusy={resendBusy}
+      // />
+    // );
+  // }
 
-  if (route.name === 'magic-link-sent' && contact) {
-    return (
-      <MagicLinkSentScreen
-        email={contact.identifier}
-        onBack={pop}
-        onResend={handleResendCode}
-        resendBusy={resendBusy}
-        resent={resent}
-        error={verifyError}
-      />
-    );
-  }
+  // if (route.name === 'magic-link-sent' && contact) {
+    // return (
+      // <MagicLinkSentScreen
+        // email={contact.identifier}
+        // onBack={pop}
+        // onResend={handleResendCode}
+        // resendBusy={resendBusy}
+        // resent={resent}
+        // error={verifyError}
+      // />
+    // );
+  // }
 
-  if (route.name === 'sign-in') {
-    return <SignInScreen onBack={pop} onContinue={(nextRole) => { setRole(nextRole); reset({ name: 'contact' }); }} />;
-  }
+  // if (route.name === 'sign-in') {
+    // return <SignInScreen onBack={pop} onContinue={(nextRole) => { setRole(nextRole); reset({ name: 'contact' }); }} />;
+  // }
 
-  if (route.name === 'business-onboarding') {
-    return <BusinessOnboardingScreen tradeIntent={tradeIntent ?? 'both'} onComplete={(profile) => { setBusinessProfile(profile); reset({ name: 'business-verification', source: 'onboarding' }); }} />;
-  }
+  // if (route.name === 'business-onboarding') {
+    // return <BusinessOnboardingScreen tradeIntent={tradeIntent ?? 'both'} onComplete={(profile) => { setBusinessProfile(profile); reset({ name: 'business-verification', source: 'onboarding' }); }} />;
+  // }
 
   if (route.name === 'business-verification' && businessProfile) {
     const finish = () => {
@@ -507,7 +526,7 @@ export function AppNavigator() {
       {route.name === 'tabs' ? (
         <BottomTabs role={role} active={tab} onChange={setTab} bottomInset={insets.bottom} />
       ) : null}
-      <BusinessTrustGate visible={trustGateOpen} onClose={() => { setTrustGateOpen(false); pendingTrustAction.current = null; }} onVerify={() => { setTrustGateOpen(false); businessProfile ? push({ name: 'business-verification', source: 'gate' }) : reset({ name: 'business-onboarding' }); }} />
+      <BusinessTrustGate visible={trustGateOpen} onClose={() => { setTrustGateOpen(false); pendingTrustAction.current = null; }} onVerify={() => { setTrustGateOpen(false); if (businessProfile) push({ name: 'business-verification', source: 'gate' }); /* Onboarding disabled — no fallback to reset({ name: 'business-onboarding' }). */ }} />
     </View>
   );
 }
