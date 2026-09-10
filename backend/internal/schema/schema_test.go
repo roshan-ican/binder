@@ -17,6 +17,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/roshan-ican/binder/backend/internal/matching"
 )
 
 func migrationsPath(t *testing.T) string {
@@ -55,6 +56,17 @@ func applyMigrations(t *testing.T, databaseURL string) {
 		t.Fatalf("migrate up: %v", err)
 	}
 	t.Cleanup(func() {
+		pool, err := pgxpool.New(context.Background(), databaseURL)
+		if err != nil {
+			t.Errorf("cleanup connect: %v", err)
+			return
+		}
+		_, err = pool.Exec(context.Background(), `TRUNCATE businesses CASCADE`)
+		pool.Close()
+		if err != nil {
+			t.Errorf("cleanup fixtures: %v", err)
+			return
+		}
 		if err := m.Down(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
 			t.Errorf("cleanup: migrate down: %v", err)
 		}
@@ -76,8 +88,8 @@ func TestMigrationsApplyAndRollBackCleanly(t *testing.T) {
 	if dirty {
 		t.Fatalf("expected clean migration state, got dirty at version %d", version)
 	}
-	if version != 4 {
-		t.Fatalf("expected to land on migration 4, got %d", version)
+	if version != 6 {
+		t.Fatalf("expected to land on migration 6, got %d", version)
 	}
 
 	if err := m.Down(); err != nil {
@@ -120,7 +132,7 @@ func TestConversationParticipantIdentityConstraint(t *testing.T) {
 		WITH u AS (INSERT INTO users (full_name) VALUES ('t') RETURNING id)
 		INSERT INTO businesses (owner_user_id, business_name) SELECT id, 'Test Biz' FROM u RETURNING id
 	`)
-	mustScan(t, pool, ctx, &supplierID, `INSERT INTO suppliers (name, source_type) VALUES ('Test Supplier', 'manual_entry') RETURNING id`)
+	mustScan(t, pool, ctx, &supplierID, `INSERT INTO businesses (business_name, source_type) VALUES ('Test Supplier', 'manual_entry') RETURNING id`)
 	mustScan(t, pool, ctx, &enquiryID, `INSERT INTO enquiries (buyer_business_id, title) VALUES ($1, 'Test enquiry') RETURNING id`, businessID)
 	mustScan(t, pool, ctx, &conversationID, `INSERT INTO conversations (context_type, context_id) VALUES ('enquiry', $1) RETURNING id`, enquiryID)
 
@@ -128,23 +140,22 @@ func TestConversationParticipantIdentityConstraint(t *testing.T) {
 		name        string
 		role        string
 		businessID  *string
-		supplierID  *string
 		expectError bool
 	}{
-		{"valid buyer", "buyer", &businessID, nil, false},
-		{"valid supplier", "supplier", nil, &supplierID, false},
-		{"buyer role missing business_id", "buyer", nil, nil, true},
-		{"buyer role with both ids set", "buyer", &businessID, &supplierID, true},
-		{"supplier role with business_id instead", "supplier", &businessID, nil, true},
-		{"system role with an id set", "system", &businessID, nil, true},
+		{"valid buyer", "buyer", &businessID, false},
+		{"valid unclaimed supplier", "supplier", &supplierID, false},
+		{"valid system", "system", nil, false},
+		{"buyer missing business", "buyer", nil, true},
+		{"supplier missing business", "supplier", nil, true},
+		{"system with business", "system", &businessID, true},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			_, err := pool.Exec(ctx, `
-				INSERT INTO conversation_participants (conversation_id, role, business_id, supplier_id)
-				VALUES ($1, $2, $3, $4)
-			`, conversationID, tc.role, tc.businessID, tc.supplierID)
+				INSERT INTO conversation_participants (conversation_id, role, business_id)
+				VALUES ($1, $2, $3)
+			`, conversationID, tc.role, tc.businessID)
 
 			if tc.expectError && err == nil {
 				t.Fatalf("expected constraint violation, got none")
@@ -176,12 +187,12 @@ func TestMatchCandidateUniquenessAndEventTypeIsOpenEnded(t *testing.T) {
 		WITH u AS (INSERT INTO users (full_name) VALUES ('t') RETURNING id)
 		INSERT INTO businesses (owner_user_id, business_name) SELECT id, 'Test Biz' FROM u RETURNING id
 	`)
-	mustScan(t, pool, ctx, &supplierID, `INSERT INTO suppliers (name, source_type) VALUES ('Test Supplier', 'manual_entry') RETURNING id`)
+	mustScan(t, pool, ctx, &supplierID, `INSERT INTO businesses (business_name, source_type) VALUES ('Test Supplier', 'manual_entry') RETURNING id`)
 	mustScan(t, pool, ctx, &enquiryID, `INSERT INTO enquiries (buyer_business_id, title) VALUES ($1, 'Test enquiry') RETURNING id`, businessID)
-	mustScan(t, pool, ctx, &candidateID, `INSERT INTO match_candidates (enquiry_id, supplier_id) VALUES ($1, $2) RETURNING id`, enquiryID, supplierID)
+	mustScan(t, pool, ctx, &candidateID, `INSERT INTO match_candidates (enquiry_id, business_id) VALUES ($1, $2) RETURNING id`, enquiryID, supplierID)
 
-	if _, err := pool.Exec(ctx, `INSERT INTO match_candidates (enquiry_id, supplier_id) VALUES ($1, $2)`, enquiryID, supplierID); err == nil {
-		t.Fatal("expected duplicate (enquiry_id, supplier_id) to be rejected")
+	if _, err := pool.Exec(ctx, `INSERT INTO match_candidates (enquiry_id, business_id) VALUES ($1, $2)`, enquiryID, supplierID); err == nil {
+		t.Fatal("expected duplicate (enquiry_id, business_id) to be rejected")
 	}
 
 	// event_type is free text (Go-validated), not tied to match_candidates.status --
@@ -193,32 +204,42 @@ func TestMatchCandidateUniquenessAndEventTypeIsOpenEnded(t *testing.T) {
 	}
 }
 
-func TestSupplierBusinessIDIsOptionalAndUnique(t *testing.T) {
+func TestUnclaimedBusinessAndPlaceIdentity(t *testing.T) {
 	url := testDatabaseURL(t)
 	applyMigrations(t, url)
-
 	ctx := context.Background()
 	pool, err := pgxpool.New(ctx, url)
 	if err != nil {
-		t.Fatalf("connect: %v", err)
+		t.Fatal(err)
 	}
 	defer pool.Close()
-
-	// An externally discovered supplier has no business_id at all.
-	if _, err := pool.Exec(ctx, `INSERT INTO suppliers (name, source_type) VALUES ('External Co', 'directory_scrape')`); err != nil {
-		t.Fatalf("expected supplier without business_id to be accepted, got: %v", err)
+	var businessID, userID string
+	mustScan(t, pool, ctx, &businessID, `INSERT INTO businesses (business_name, source_type, source_place_id) VALUES ('External Co', 'apify', 'place-1') RETURNING id`)
+	var claimed bool
+	if err := pool.QueryRow(ctx, `SELECT is_claimed FROM businesses WHERE id=$1`, businessID).Scan(&claimed); err != nil || claimed {
+		t.Fatalf("expected unclaimed: %v", err)
 	}
-
-	var businessID string
-	mustScan(t, pool, ctx, &businessID, `
-		WITH u AS (INSERT INTO users (full_name) VALUES ('t') RETURNING id)
-		INSERT INTO businesses (owner_user_id, business_name) SELECT id, 'Test Biz' FROM u RETURNING id
-	`)
-	if _, err := pool.Exec(ctx, `INSERT INTO suppliers (business_id, name, source_type) VALUES ($1, 'A', 'binder_signup')`, businessID); err != nil {
-		t.Fatalf("first supplier linked to business: %v", err)
+	if _, err := pool.Exec(ctx, `INSERT INTO businesses (business_name, source_place_id) VALUES ('Duplicate', 'place-1')`); err == nil {
+		t.Fatal("duplicate place accepted")
 	}
-	if _, err := pool.Exec(ctx, `INSERT INTO suppliers (business_id, name, source_type) VALUES ($1, 'B', 'binder_signup')`, businessID); err == nil {
-		t.Fatal("expected a second supplier row for the same business_id to be rejected")
+	mustScan(t, pool, ctx, &userID, `INSERT INTO users (full_name) VALUES ('Owner') RETURNING id`)
+	if _, err := pool.Exec(ctx, `UPDATE businesses SET owner_user_id=$1 WHERE id=$2`, userID, businessID); err != nil {
+		t.Fatal(err)
+	}
+	if err := pool.QueryRow(ctx, `SELECT is_claimed FROM businesses WHERE id=$1`, businessID).Scan(&claimed); err != nil || !claimed {
+		t.Fatalf("expected claimed: %v", err)
+	}
+	if _, err := pool.Exec(ctx, `DELETE FROM users WHERE id=$1`, userID); err != nil {
+		t.Fatal(err)
+	}
+	if err := pool.QueryRow(ctx, `SELECT is_claimed FROM businesses WHERE id=$1`, businessID).Scan(&claimed); err != nil || claimed {
+		t.Fatalf("business must survive owner deletion unclaimed: %v", err)
+	}
+	for _, table := range []string{"suppliers", "ai_extractions", "supplier_capabilities"} {
+		var exists bool
+		if err := pool.QueryRow(ctx, `SELECT to_regclass($1) IS NOT NULL`, table).Scan(&exists); err != nil || exists {
+			t.Fatalf("obsolete table %s still exists: %v", table, err)
+		}
 	}
 }
 
@@ -275,5 +296,68 @@ func mustScan(t *testing.T, pool *pgxpool.Pool, ctx context.Context, dest *strin
 	t.Helper()
 	if err := pool.QueryRow(ctx, sql, args...).Scan(dest); err != nil {
 		t.Fatalf("query %q: %v", sql, err)
+	}
+}
+
+// Exercise the populated upgrade, including both linked and external vendors.
+func TestUnifiedBusinessUpgradePreservesReferences(t *testing.T) {
+	url := testDatabaseURL(t)
+	m := newMigrator(t, url)
+	defer m.Close()
+	if err := m.Migrate(5); err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.Background()
+	pool, err := pgxpool.New(ctx, url)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer pool.Close()
+	var userID, businessID, linkedID, externalID, enquiryID, conversationID string
+	mustScan(t, pool, ctx, &userID, `INSERT INTO users (full_name, supabase_user_id) VALUES ('Auth survivor', '11111111-1111-1111-1111-111111111111') RETURNING id`)
+	mustScan(t, pool, ctx, &businessID, `INSERT INTO businesses (owner_user_id, business_name) VALUES ($1, 'Claimed') RETURNING id`, userID)
+	mustScan(t, pool, ctx, &linkedID, `INSERT INTO suppliers (business_id, name, source_type) VALUES ($1, 'Claimed', 'binder_signup') RETURNING id`, businessID)
+	mustScan(t, pool, ctx, &externalID, `INSERT INTO suppliers (name, source_type, country) VALUES ('External', 'apify', 'UAE') RETURNING id`)
+	mustScan(t, pool, ctx, &enquiryID, `INSERT INTO enquiries (buyer_business_id, title, category) VALUES ($1, 'Need boxes', 'Packaging') RETURNING id`, businessID)
+	mustScan(t, pool, ctx, &conversationID, `INSERT INTO conversations (context_type, context_id) VALUES ('enquiry', $1) RETURNING id`, enquiryID)
+	for _, id := range []string{linkedID, externalID} {
+		if _, err := pool.Exec(ctx, `INSERT INTO supplier_capabilities (supplier_id, category, capability) VALUES ($1, 'Packaging', 'Boxes'), ($1, 'Packaging', 'Printed boxes')`, id); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := pool.Exec(ctx, `INSERT INTO match_candidates (enquiry_id, supplier_id) VALUES ($1, $2)`, enquiryID, id); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := pool.Exec(ctx, `INSERT INTO conversation_participants (conversation_id, role, supplier_id) VALUES ($1, 'supplier', $2)`, conversationID, externalID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `INSERT INTO messages (conversation_id, sender_role, supplier_id, body) VALUES ($1, 'supplier', $2, 'Quote')`, conversationID, linkedID); err != nil {
+		t.Fatal(err)
+	}
+	applyMigrations(t, url)
+	var count int
+	checks := []struct {
+		sql  string
+		want int
+	}{
+		{`SELECT count(*) FROM users WHERE supabase_user_id = '11111111-1111-1111-1111-111111111111'`, 1},
+		{`SELECT count(*) FROM businesses`, 2},
+		{`SELECT count(*) FROM businesses WHERE NOT is_claimed AND country_code = 'AE'`, 1},
+		{`SELECT count(*) FROM business_capabilities c JOIN businesses b ON b.id=c.business_id`, 4},
+		{`SELECT count(*) FROM match_candidates c JOIN businesses b ON b.id=c.business_id`, 2},
+		{`SELECT count(*) FROM conversation_participants p JOIN businesses b ON b.id=p.business_id WHERE NOT b.is_claimed`, 1},
+		{`SELECT count(*) FROM messages m JOIN businesses b ON b.id=m.business_id WHERE b.is_claimed`, 1},
+	}
+	for _, check := range checks {
+		if err := pool.QueryRow(ctx, check.sql).Scan(&count); err != nil || count != check.want {
+			t.Fatalf("%s: got %d want %d: %v", check.sql, count, check.want, err)
+		}
+	}
+	ranked, err := matching.Run(ctx, pool, enquiryID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(ranked) != 2 {
+		t.Fatalf("expected one match per business despite multiple capabilities, got %d", len(ranked))
 	}
 }

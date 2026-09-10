@@ -4,10 +4,9 @@
 // point it at a scratch database.
 //
 // Job-seeker data is dropped from the product, so it has no home here
-// either way. Suppliers + supplier_capabilities ARE seeded, from the 5 non-`me` mock
-// businesses' own capability/moq/capacity/serves fields -- real data, not
-// fabricated. match_candidates/match_events/outreach_attempts/
-// ai_extractions are still left empty: those are produced by running the
+// either way. Business capabilities ARE seeded, from the 5 non-`me` mock
+// businesses' mock capability/moq/capacity/serves fields.
+// match_candidates/match_events/outreach_attempts are left empty, produced by the
 // Matching Brain (cmd/match) against the seeded data, not by the seed
 // script itself. conversations/messages are also skipped: the mock data links a
 // conversation to an enquiry by a loose title string, which the new
@@ -105,10 +104,8 @@ var seedEnquiries = []seedEnquiry{
 	{"me", "Monthly freight to Delhi", "Logistics", "Kanpur", "Ongoing", "8 trips / month", "₹14,000 / trip", "Part load acceptable", "draft", 0, 0, 0},
 }
 
-// seedSupplier turns the 5 non-`me` mock businesses into suppliers +
-// supplier_capabilities, using their own existing mock.ts fields
-// (capability, moq, capacity, serves) -- not fabricated data. This is what
-// gives the Matching Brain something real to score.
+// seedSupplier supplies structured business_capabilities from the existing
+// mock businesses for exercising the matching flow.
 type seedSupplier struct {
 	businessMockID string
 	category       string
@@ -229,8 +226,8 @@ func main() {
 
 		var businessID string
 		err = tx.QueryRow(ctx,
-			`INSERT INTO businesses (owner_user_id, business_name, contact_name, city, region, verification_status)
-			 VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+			`INSERT INTO businesses (owner_user_id, business_name, contact_name, city, region, verification_status, country_code, source_type)
+			 VALUES ($1, $2, $3, $4, $5, $6, 'IN', 'mock') RETURNING id`,
 			userID, b.name, "Roshan", b.city, b.region, b.verification,
 		).Scan(&businessID)
 		if err != nil {
@@ -279,23 +276,6 @@ func main() {
 		if !ok {
 			log.Fatalf("supplier references unknown business %q", s.businessMockID)
 		}
-		var biz seedBusiness
-		for _, b := range seedBusinesses {
-			if b.mockID == s.businessMockID {
-				biz = b
-				break
-			}
-		}
-
-		var supplierID string
-		err := tx.QueryRow(ctx,
-			`INSERT INTO suppliers (business_id, name, city, region, source_type, verification_status)
-			 VALUES ($1, $2, $3, $4, 'binder_signup', $5) RETURNING id`,
-			businessID, biz.name, biz.city, biz.region, biz.verification,
-		).Scan(&supplierID)
-		if err != nil {
-			log.Fatalf("insert supplier %s: %v", biz.name, err)
-		}
 
 		var minOrderQuantity *int // ok=false ("No minimum") means no lower bound -- left nil
 		if n, ok := numparse.FirstInt(s.moqRaw); ok {
@@ -303,14 +283,14 @@ func main() {
 		}
 
 		if _, err := tx.Exec(ctx,
-			`INSERT INTO supplier_capabilities (supplier_id, category, capability, description, min_order_quantity, capacity, service_regions)
+			`INSERT INTO business_capabilities (business_id, category, capability, description, min_order_quantity, capacity, service_regions)
 			 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-			supplierID, s.category, s.capability, s.description, minOrderQuantity, s.capacity, s.serviceRegions,
+			businessID, s.category, s.capability, s.description, minOrderQuantity, s.capacity, s.serviceRegions,
 		); err != nil {
-			log.Fatalf("insert supplier_capabilities for %s: %v", biz.name, err)
+			log.Fatalf("insert business_capabilities for %s: %v", s.businessMockID, err)
 		}
 	}
-	fmt.Printf("seeded %d suppliers\n", len(seedSuppliers))
+	fmt.Printf("seeded capabilities for %d businesses\n", len(seedSuppliers))
 
 	for _, l := range seedSwapListings {
 		businessID, ok := businessIDs[l.businessMockID]

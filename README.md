@@ -59,3 +59,35 @@ remains available for the later business API integration.
 Welcome → Discover → Search results → Business profile (with "why this
 matches") → Connect → Conversation, plus the Opportunities deck, the Enquiries
 dashboard and detail, Inbox, and Profile.
+
+## Business directory schema
+
+Migration 000006 unifies imported vendors and registered businesses in
+`businesses`. `owner_user_id` is nullable; the read-only `is_claimed` boolean
+is generated from whether an owner exists. Verification remains separate.
+Deleting an owner leaves the business unclaimed instead of deleting its listings.
+Auth identities and `users` are unchanged.
+
+`business_roles` and `business_industries` support multiple roles/industries.
+`business_capabilities` holds multiple structured offers per business for matching.
+Matches, conversation participants, and messages now reference business IDs;
+there is no separate supplier identity. `suppliers` and the unused
+`ai_extractions` log are removed. Historical migrations still contain their
+original definitions so existing installations can upgrade normally.
+
+The directory has optional contact/source fields, a unique Google Place ID,
+Google profile link, rating/review count, and `last_synced_at`. Unknown countries
+remain NULL. Apify importing and public directory endpoints are not implemented
+by this schema change. A future importer must preserve owner-edited fields on
+claimed businesses and update imported Google metadata separately.
+
+Run migrations from `backend` with `go run ./cmd/migrate up`. Migration 000006
+preserves existing business/feature references; it discards extraction logs.
+Its rollback cannot restore those logs or original supplier UUIDs and refuses
+when unclaimed businesses exist. Restore a backup for an exact reversal.
+
+Schema tests require an **empty scratch Postgres database with pgvector**:
+`TEST_DATABASE_URL=... go test ./internal/schema`. They migrate up/down and clear
+fixtures. Auth integration tests require a separate migrated scratch database:
+`TEST_DATABASE_URL=... go test ./internal/authsession`. Never point schema tests
+at the application database.

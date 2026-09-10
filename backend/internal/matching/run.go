@@ -31,7 +31,7 @@ type RankedCandidate struct {
 	Breakdown  ScoreBreakdown
 }
 
-// Run scores every supplier_capabilities row against one enquiry, keeps
+// Run scores every business_capabilities row against one enquiry, keeps
 // only the candidates that pass the hard filters, ranks the survivors, and
 // persists the result: match_candidates holds the current state, and a
 // `ranked` match_event is appended for each survivor so the run leaves a
@@ -87,8 +87,13 @@ func Run(ctx context.Context, pool *pgxpool.Pool, enquiryID string) ([]RankedCan
 	}
 
 	ranked := make([]RankedCandidate, 0, len(results))
-	for i, r := range results {
-		rank := i + 1
+	seen := make(map[string]bool)
+	for _, r := range results {
+		if seen[r.row.SupplierID] {
+			continue
+		}
+		seen[r.row.SupplierID] = true
+		rank := len(ranked) + 1
 		breakdownJSON, err := json.Marshal(r.result.Breakdown)
 		if err != nil {
 			return nil, fmt.Errorf("matching: marshal score breakdown: %w", err)
@@ -96,7 +101,7 @@ func Run(ctx context.Context, pool *pgxpool.Pool, enquiryID string) ([]RankedCan
 
 		var candidateID string
 		err = tx.QueryRow(ctx, `
-			INSERT INTO match_candidates (enquiry_id, supplier_id, status, rank, score, score_breakdown, ranking_version)
+			INSERT INTO match_candidates (enquiry_id, business_id, status, rank, score, score_breakdown, ranking_version)
 			VALUES ($1, $2, 'generated', $3, $4, $5, $6)
 			RETURNING id
 		`, enquiryID, r.row.SupplierID, rank, r.result.Score, breakdownJSON, RankingVersion).Scan(&candidateID)
@@ -157,10 +162,10 @@ func loadEnquiry(ctx context.Context, pool *pgxpool.Pool, enquiryID string) (Enq
 
 func loadCandidates(ctx context.Context, pool *pgxpool.Pool) ([]candidateRow, error) {
 	rows, err := pool.Query(ctx, `
-		SELECT sc.supplier_id, s.name, sc.category, sc.min_order_quantity, sc.max_order_quantity,
+		SELECT sc.business_id, s.business_name, sc.category, sc.min_order_quantity, sc.max_order_quantity,
 		       sc.service_regions, sc.capacity, s.verification_status::text
-		FROM supplier_capabilities sc
-		JOIN suppliers s ON s.id = sc.supplier_id
+		FROM business_capabilities sc
+		JOIN businesses s ON s.id = sc.business_id
 	`)
 	if err != nil {
 		return nil, err
