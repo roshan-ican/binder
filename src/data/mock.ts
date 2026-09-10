@@ -1,6 +1,7 @@
 import type { MatchQuality } from '../components/MatchLabel';
 import type { TrustSignal } from '../components/TrustBadge';
 import type { CountryCode } from './countries';
+import { gangtokRestaurants } from './gangtokRestaurants';
 
 export type Business = {
   id: string;
@@ -122,7 +123,7 @@ export const candidate = {
   completeness: 64,
 };
 
-export const businesses: Business[] = [
+export const dummyBusinesses: Business[] = [
   {
     id: 'abc-leather',
     name: 'ABC Leather Works',
@@ -221,6 +222,8 @@ export const businesses: Business[] = [
     whyItMatches: ['Same city', 'Low quantity purchases', 'Documents provided'],
   },
 ];
+
+export const businesses: Business[] = gangtokRestaurants;
 
 export const opportunities: Enquiry[] = [
   {

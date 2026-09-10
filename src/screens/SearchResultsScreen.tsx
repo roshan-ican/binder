@@ -51,7 +51,7 @@ export function SearchResultsScreen({
       const matchesTerm =
         term.length === 0 ||
         `${business.name} ${business.role} ${business.capability} ${business.city}`.toLowerCase().includes(term);
-      const matchesCity = !cityOnly || business.city === 'Kanpur';
+      const matchesCity = !cityOnly || business.region === 'Sikkim';
       const matchesTrust = !verifiedOnly || business.trust === 'verified';
       return matchesTerm && matchesCity && matchesTrust;
     });
@@ -72,7 +72,7 @@ export function SearchResultsScreen({
   // Never an empty screen: widen the region and say so.
   const widened = results.length === 0 && cityOnly;
   const shown = widened
-    ? businesses.filter((business) => business.region === 'Uttar Pradesh')
+    ? businesses.filter((business) => business.region === 'Sikkim')
     : results;
 
   return (
@@ -87,7 +87,7 @@ export function SearchResultsScreen({
 
       <View style={{ flexDirection: 'row', gap: spacing[2], marginTop: spacing[3], flexWrap: 'wrap' }}>
         <Chip label="Filters" icon="sliders" />
-        <Chip label="Kanpur" selected={cityOnly} onPress={() => setCityOnly((value) => !value)} />
+        <Chip label="Gangtok area" selected={cityOnly} onPress={() => setCityOnly((value) => !value)} />
         <Chip label="Verified" selected={verifiedOnly} onPress={() => setVerifiedOnly((value) => !value)} />
       </View>
 
@@ -155,12 +155,12 @@ export function SearchResultsScreen({
         <View style={{ gap: spacing[3], marginTop: spacing[4] }}>
           {widened ? (
             <Text variant="body" tone="secondary" style={{ marginBottom: spacing[1] }}>
-              No exact matches in Kanpur.{'\n'}Showing results across Uttar Pradesh.
+              No exact matches in the Gangtok area.{'\n'}Showing results across Sikkim.
             </Text>
           ) : (
             <Text variant="bodySmall" tone="tertiary">
               {shown.length} {shown.length === 1 ? 'result' : 'results'}
-              {cityOnly && !widened ? ' in Kanpur' : ''}
+              {cityOnly && !widened ? ' in the Gangtok area' : ''}
             </Text>
           )}
 

@@ -33,6 +33,34 @@ backend/internal/ Go application packages and infrastructure
 backend/migrations/ versioned database migrations
 ```
 
+## Supplier discovery sync
+
+The Go supplier sync imports Google Maps businesses through Apify. Gangtok,
+Sikkim is the default location, and locations/search terms remain configurable.
+
+From `backend`, run a low-volume, no-database test first:
+
+```powershell
+go run ./cmd/supplier-sync --dry-run --max-results 5
+```
+
+After reviewing the Apify run, apply migrations and persist the results:
+
+```powershell
+go run ./cmd/migrate up
+go run ./cmd/supplier-sync
+```
+
+Use semicolons between locations and commas between search terms:
+
+```powershell
+go run ./cmd/supplier-sync --locations "Gangtok, Sikkim, India;Siliguri, West Bengal, India" --search-terms "manufacturer,wholesaler,supplier"
+```
+
+For a continuously running process, `--schedule` runs immediately and then every
+15 days. In production, a host-managed scheduled job invoking the one-shot command
+is preferred because it survives process restarts cleanly.
+
 ## Code boundaries
 
 - `src/features/auth/` owns Google sign-in, the Binder session endpoint contract,

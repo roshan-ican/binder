@@ -32,7 +32,7 @@ import { colors, rhythm, size, spacing } from '../theme';
 
 type BusinessBrowseKey = 'businesses' | 'manufacturers' | 'shopkeepers' | 'suppliers' | 'services' | 'jobs';
 type JobBrowseKey = 'all-jobs' | 'full-time' | 'part-time' | 'contract' | 'internship' | 'nearby';
-type LocationKey = 'kanpur-up' | 'lucknow-up' | 'delhi-dl' | 'jaipur-rj' | 'uttar-pradesh' | 'delhi' | 'rajasthan';
+type LocationKey = 'gangtok-sikkim' | 'kanpur-up' | 'lucknow-up' | 'delhi-dl' | 'jaipur-rj' | 'uttar-pradesh' | 'delhi' | 'rajasthan';
 
 const businessBrowseItems = [
   { key: 'businesses', label: 'Businesses' },
@@ -53,6 +53,7 @@ const jobBrowseItems = [
 ] satisfies { key: JobBrowseKey; label: string }[];
 
 const locationOptions = [
+  { key: 'gangtok-sikkim', state: 'Sikkim', label: 'Gangtok area, Sikkim' },
   { key: 'kanpur-up', city: 'Kanpur', state: 'Uttar Pradesh', label: 'Kanpur, Uttar Pradesh' },
   { key: 'lucknow-up', city: 'Lucknow', state: 'Uttar Pradesh', label: 'Lucknow, Uttar Pradesh' },
   { key: 'delhi-dl', city: 'Delhi', state: 'Delhi', label: 'Delhi, Delhi' },
@@ -96,7 +97,7 @@ export function DiscoverScreen({
   const isJobSeeker = false;
   const [businessBrowse, setBusinessBrowse] = useState<BusinessBrowseKey>('businesses');
   const [jobBrowse, setJobBrowse] = useState<JobBrowseKey>('all-jobs');
-  const [location, setLocation] = useState<LocationKey>('kanpur-up');
+  const [location, setLocation] = useState<LocationKey>('gangtok-sikkim');
   const [locationPickerOpen, setLocationPickerOpen] = useState(false);
   const selectedLocation = locationOptions.find((item) => item.key === location) ?? locationOptions[0];
 
